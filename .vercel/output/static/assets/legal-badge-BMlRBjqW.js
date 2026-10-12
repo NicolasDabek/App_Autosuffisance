@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-Cltr0gcK.js";import{n as t}from"./animals-BVL3pNuT.js";import{t as n}from"./badge-Clm8VPXq.js";var r=e();function i({level:e}){return(0,r.jsx)(n,{variant:e===`simple`?`ok`:e===`complexe`?`warn`:`secondary`,children:t[e]})}export{i as t};

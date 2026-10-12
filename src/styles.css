@@ -1,0 +1,100 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+
+  --color-background: #f1ebe1;
+  --color-foreground: #1c1814;
+  --color-card: #faf7f1;
+  --color-card-foreground: #1c1814;
+  --color-popover: #faf7f1;
+  --color-popover-foreground: #1c1814;
+  --color-primary: #3a5340;
+  --color-primary-foreground: #f4f1ea;
+  --color-secondary: #e8e1d4;
+  --color-secondary-foreground: #1c1814;
+  --color-muted: #e6dfd3;
+  --color-muted-foreground: #6a6358;
+  --color-accent: #dde5d8;
+  --color-accent-foreground: #2a3d30;
+  --color-destructive: #8f3d32;
+  --color-destructive-foreground: #faf7f1;
+  --color-border: #d8d0c3;
+  --color-input: #d8d0c3;
+  --color-ring: #3a5340;
+  --color-sidebar: #eae3d6;
+  --color-sidebar-foreground: #1c1814;
+  --color-sidebar-accent: #dfe6d9;
+  --color-sidebar-border: #d4cbbc;
+  --color-chart-1: #3a5340;
+  --color-chart-2: #4a6b72;
+  --color-chart-3: #6b5344;
+  --color-chart-4: #8a9484;
+  --color-chart-5: #5c6b4a;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius: 12px;
+
+  --shadow-border:
+    0px 0px 0px 1px rgba(28, 24, 20, 0.06),
+    0px 1px 2px -1px rgba(28, 24, 20, 0.06),
+    0px 2px 4px 0px rgba(28, 24, 20, 0.04);
+  --shadow-border-hover:
+    0px 0px 0px 1px rgba(28, 24, 20, 0.1),
+    0px 1px 2px -1px rgba(28, 24, 20, 0.08),
+    0px 4px 10px 0px rgba(28, 24, 20, 0.06);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 0% -10%, color-mix(in oklab, var(--color-primary) 7%, transparent), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in oklab, var(--color-chart-3) 5%, transparent), transparent 50%);
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

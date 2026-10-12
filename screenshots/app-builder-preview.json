@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Havre",
+      "hasCanvas": false,
+      "bodyTextLen": 3073,
+      "bodyTextHash": "42b8d3efcb2fc138ab21566011464f82980d40ae7a3c5bade715292bab6fe912",
+      "bodyTextPrefix": "Havre Rechercher ⌘K Tableau de bord NOURRIR Chaînes alimentaires",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Havre",
+      "hasCanvas": false,
+      "bodyTextLen": 2807,
+      "bodyTextHash": "2595676957a8174876d41c651497de4ae290e3bfffbc195d5366ecad033c549a",
+      "bodyTextPrefix": "Havre OCTOBRE · SEMAINE 40 Installer le foyer Quelques paramètre",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
