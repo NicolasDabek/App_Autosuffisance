@@ -329,6 +329,30 @@ export const ENERGY_SCENARIOS: EnergyScenario[] = [
     ],
     caveats: ["Surchauffe", "Gel du réseau", "Installation non conforme", "Assurance"],
   },
+  {
+    id: "pv-plug",
+    name: "Kit solaire « prêt à brancher »",
+    summary:
+      "1 à 2 panneaux sur balcon, terrasse ou au sol, branchés sur une prise dédiée. Petite production diurne qui couvre le talon (frigo, box, veilles).",
+    capex: [400, 1200],
+    yearlySavePct: 5,
+    autonomyHeatPct: 0,
+    autonomyElecPct: 8,
+    complexity: 1,
+    timeToReturnYears: [6, 12],
+    suits: ["maison", "appart"],
+    steps: [
+      "Vérifier règlement de copropriété ou d’urbanisme (façade, balcon)",
+      "Choisir un micro-onduleur conforme, puissance modeste (quelques centaines de W)",
+      "Déclarer l’installation à Enedis (convention d’autoconsommation sans injection)",
+      "Orienter plein sud si possible, sans ombre ; consommer en journée",
+    ],
+    caveats: [
+      "Circuit et prise en bon état, différentiel 30 mA : faire vérifier en cas de doute",
+      "Pas de multiprise ni de rallonge enroulée",
+      "Rendement plus faible à la verticale (garde-corps) qu’incliné à 30°",
+    ],
+  },
 ];
 
 export function steresForHeat(kwhHeat: number, insulation: string, climateHeatFactor: number) {
