@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ENERGY_SCENARIOS } from "@/data/energy";
 import { energyStats } from "@/lib/calculators";
 import { frEuro, frNumber } from "@/lib/format";
@@ -16,6 +17,7 @@ function EnergiePage() {
   const profile = useHavre((s) => s.profile);
   const patchHousing = useHavre((s) => s.patchHousing);
   const stats = energyStats(profile);
+  const h = profile.housing;
   const bill = profile.housing.kwhElecYear * 0.22 + profile.housing.kwhHeatYear * 0.12;
 
   return (
@@ -49,16 +51,97 @@ function EnergiePage() {
               onValueChange={(kwhHeatYear) => patchHousing({ kwhHeatYear })}
             />
           </div>
+          <div className="grid gap-1.5">
+            <Label>Chauffage actuel</Label>
+            <Pick
+              value={h.heating}
+              onChange={(heating) => patchHousing({ heating })}
+              options={[
+                ["gaz", "Gaz (rendement 90 %)"],
+                ["fioul", "Fioul (85 %)"],
+                ["elec", "Électrique direct (100 %)"],
+                ["bois", "Bois (70 %)"],
+                ["pac", "Pompe à chaleur (COP 3)"],
+                ["mixte", "Mixte (90 %)"],
+              ]}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Essence de bois</Label>
+            <Pick
+              value={h.woodKind}
+              onChange={(woodKind) => patchHousing({ woodKind })}
+              options={[
+                ["feuillus-durs", "Feuillus durs (chêne, hêtre, charme)"],
+                ["feuillus-tendres", "Feuillus tendres (bouleau, peuplier)"],
+                ["resineux", "Résineux (pin, épicéa)"],
+              ]}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Humidité du bois (%)</Label>
+            <NumberField
+              integer
+              min={10}
+              max={60}
+              emptyValue={20}
+              value={h.woodMoisturePct}
+              onValueChange={(woodMoisturePct) => patchHousing({ woodMoisturePct })}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Rendement du poêle (%)</Label>
+            <NumberField
+              integer
+              min={30}
+              max={95}
+              emptyValue={75}
+              value={h.stoveEffPct}
+              onValueChange={(stoveEffPct) => patchHousing({ stoveEffPct })}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Toiture pour panneaux (m²)</Label>
+            <NumberField integer min={0} value={h.roofM2} onValueChange={(roofM2) => patchHousing({ roofM2 })} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Orientation du pan</Label>
+            <Pick
+              value={h.pvOrientation}
+              onChange={(pvOrientation) => patchHousing({ pvOrientation })}
+              options={[
+                ["sud", "Sud (100 %)"],
+                ["sud-est-ouest", "Sud-est / sud-ouest (95 %)"],
+                ["est-ouest", "Est / ouest (85 %)"],
+                ["nord", "Nord (60 %, déconseillé)"],
+              ]}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Part autoconsommée (%)</Label>
+            <NumberField
+              integer
+              min={0}
+              max={100}
+              emptyValue={35}
+              value={h.selfConsumptionPct}
+              onValueChange={(selfConsumptionPct) => patchHousing({ selfConsumptionPct })}
+            />
+          </div>
+          <div />
           <div>
             <p className="text-xs text-muted-foreground">Stères si tout le chaud au bois</p>
             <p className="font-display text-2xl tabular-nums">{frNumber(stats.steres, 1)}</p>
-            <p className="text-xs text-muted-foreground">{stats.climate.woodNote}</p>
+            <p className="text-xs text-muted-foreground">
+              {frNumber(stats.usefulHeat, 0)} kWh utiles ÷ ({frNumber(stats.kwhPerStere, 0)} kWh/stère ×{" "}
+              {h.stoveEffPct} %). {stats.climate.woodNote}
+            </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">PV toiture (ordre, sans batterie)</p>
             <p className="font-display text-2xl tabular-nums">{frNumber(stats.pv.kwc, 1)} kWc</p>
             <p className="text-xs text-muted-foreground">
-              ~{frNumber(stats.pv.kwh, 0)} kWh brut · {frNumber(stats.elecCov, 0)} % des besoins élec en autoconsommation diurne
+              ~{frNumber(stats.pv.kwh, 0)} kWh brut · {frNumber(stats.elecCov, 0)} % des besoins élec ({h.selfConsumptionPct} % autoconsommés)
             </p>
           </div>
         </CardContent>
@@ -114,5 +197,30 @@ function EnergiePage() {
       </p>
       <Disclaimer />
     </div>
+  );
+}
+
+function Pick<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: [T, string][];
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as T)}>
+      <SelectTrigger>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map(([id, label]) => (
+          <SelectItem key={id} value={id}>
+            {label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

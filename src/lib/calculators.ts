@@ -1,9 +1,20 @@
 import { CHAINS } from "@/data/chains";
 import { climateById } from "@/data/climate";
 import { pvYield } from "@/data/energy";
-import type { AppPath, FoodChain } from "@/data/types";
+import type { AppPath, ClimateId, FoodChain } from "@/data/types";
 import { WASTE_METHODS } from "@/data/waste";
-import type { LogEntry, NoiseTol, Profile } from "./store";
+import type {
+  Activity,
+  Diet,
+  LogEntry,
+  NoiseTol,
+  Orientation,
+  Profile,
+  RoofMaterial,
+  Skill,
+  SoilId,
+  WoodKind,
+} from "./store";
 
 const NOISE_MAP: Record<NoiseTol, 1 | 2 | 3> = { faible: 1, moyen: 2, eleve: 3 };
 
@@ -97,13 +108,67 @@ const KCAL_FALLBACK: Record<string, number> = {
   cueillette: 350,
 };
 
+/** Besoins indicatifs (ANSES / EFSA, ordres de grandeur adultes 18–60 ans, moyenne femmes/hommes). */
+const ADULT_KCAL: Record<Activity, number> = { sedentaire: 2000, moderee: 2300, active: 2700 };
+const CHILD_KCAL = 1600;
+/** Légumes, fruits et pommes de terre consommés par adulte et par an, selon le régime (kg). */
+const PRODUCE_KG_ADULT: Record<Diet, number> = { omnivore: 170, flexitarien: 200, vegetarien: 230, vegan: 260 };
+
+export function household(profile: Profile) {
+  const people = Math.max(1, profile.people);
+  const children = Math.min(Math.max(0, profile.children ?? 0), people);
+  const adults = people - children;
+  /** Équivalent adulte : un enfant compte ~0,6. */
+  const adultEq = adults + children * 0.6;
+  const kcalDay = adults * ADULT_KCAL[profile.activity ?? "moderee"] + children * CHILD_KCAL;
+  return { people, adults, children, adultEq, kcalDay };
+}
+
 export function foodAutonomy(profile: Profile, logs: LogEntry[]) {
-  const need = profile.people * 2500 * 365;
-  const produced = yearLogs(logs).reduce((acc, l) => {
+  const need = household(profile).kcalDay * 365;
+  const raw = yearLogs(logs).reduce((acc, l) => {
     if (!["recolte", "oeufs", "viande", "miel", "cueillette"].includes(l.kind)) return acc;
     return acc + (l.kcal ?? l.qty * (KCAL_FALLBACK[l.kind] ?? 0));
   }, 0);
-  return { need, produced, pct: need ? Math.min(100, (produced / need) * 100) : 0 };
+  const loss = Math.min(90, Math.max(0, profile.storageLossPct ?? 0)) / 100;
+  const produced = raw * (1 - loss);
+  return { need, produced, raw, pct: need ? Math.min(100, (produced / need) * 100) : 0 };
+}
+
+const CLIMATE_YIELD: Record<ClimateId, number> = {
+  oceanique: 1,
+  "semi-oceanique": 1,
+  continental: 0.95,
+  mediterraneen: 0.9,
+  montagne: 0.75,
+  "atlantique-sud": 1.05,
+};
+const SOIL_YIELD: Record<SoilId, number> = {
+  limoneux: 1.1,
+  humifere: 1.1,
+  argileux: 0.95,
+  sableux: 0.85,
+  calcaire: 0.85,
+};
+const SKILL_YIELD: Record<Skill, number> = { debutant: 0.7, intermediaire: 1, confirme: 1.3 };
+
+/** Récolte potagère estimée : base 2,2 kg/m² modulée par climat, sol, savoir-faire, arrosage et pertes. */
+export function gardenYield(profile: Profile) {
+  const base = 2.2;
+  const climate = CLIMATE_YIELD[profile.climate] ?? 1;
+  const soil = SOIL_YIELD[profile.soil ?? "limoneux"] ?? 1;
+  const skill = SKILL_YIELD[profile.skill ?? "debutant"] ?? 1;
+  const dry = profile.climate === "mediterraneen" ? 0.6 : 0.85;
+  const water = profile.irrigation === false ? dry : 1;
+  const kgM2 = base * climate * soil * skill * water;
+  const gross = kgM2 * profile.gardenM2;
+  const loss = Math.min(90, Math.max(0, profile.storageLossPct ?? 0)) / 100;
+  const net = gross * (1 - loss);
+  const hh = household(profile);
+  const needKg = PRODUCE_KG_ADULT[profile.diet ?? "omnivore"] * hh.adultEq;
+  const coverPct = needKg ? Math.min(100, (net / needKg) * 100) : 0;
+  const m2ForFull = kgM2 > 0 ? needKg / (kgM2 * (1 - loss)) : 0;
+  return { kgM2, gross, net, needKg, coverPct, m2ForFull, factors: { climate, soil, skill, water } };
 }
 
 export function wasteStats(profile: Profile, logs: LogEntry[], methodId: string) {
@@ -117,14 +182,61 @@ export function wasteStats(profile: Profile, logs: LogEntry[], methodId: string)
   return { method, kgYearIn, kgOut, logged, fertilizerSaveEur: kgOut * 0.35 };
 }
 
+/** Rendement du chauffage actuel (énergie utile / énergie consommée). */
+const HEATING_EFF: Record<Profile["housing"]["heating"], number> = {
+  gaz: 0.9,
+  fioul: 0.85,
+  elec: 1,
+  bois: 0.7,
+  pac: 3,
+  mixte: 0.9,
+};
+/** kWh PCI par stère à 20 % d’humidité (ordres de grandeur ADEME / interprofession). */
+const WOOD_KWH_STERE: Record<WoodKind, number> = {
+  "feuillus-durs": 2000,
+  "feuillus-tendres": 1700,
+  resineux: 1500,
+};
+const ORIENTATION_FACTOR: Record<Orientation, number> = {
+  sud: 1,
+  "sud-est-ouest": 0.95,
+  "est-ouest": 0.85,
+  nord: 0.6,
+};
+const ROOF_COEF: Record<RoofMaterial, number> = {
+  tuiles: 0.9,
+  ardoise: 0.9,
+  metal: 0.95,
+  "plat-gravier": 0.6,
+  vegetalise: 0.3,
+};
+
+/**
+ * Énergie utile relative selon l’humidité du bois (base 20 %) : PCI en baisse
+ * et combustion dégradée (eau à évaporer, foyer plus froid). Ordre de grandeur.
+ */
+export function moistureFactor(pct: number) {
+  const h = Math.min(60, Math.max(10, pct));
+  const pci = (x: number) => 5.2 * (1 - x) - 0.68 * x;
+  return Math.max(0, pci(h / 100) / pci(0.2));
+}
+
 export function energyStats(profile: Profile) {
   const climate = climateById(profile.climate);
-  const steres = profile.housing.kwhHeatYear / 1750;
-  const pv = pvYield(profile.housing.roofM2, climate.pvKwhPerKwc);
-  const elecCov = profile.housing.kwhElecYear
-    ? Math.min(100, ((pv.kwh * 0.35) / profile.housing.kwhElecYear) * 100)
-    : 0;
-  return { climate, steres, pv, elecCov };
+  const h = { ...profile.housing };
+  const usefulHeat = h.kwhHeatYear * (HEATING_EFF[h.heating] ?? 0.9);
+  const kwhPerStere = (WOOD_KWH_STERE[h.woodKind] ?? 2000) * moistureFactor(h.woodMoisturePct ?? 20);
+  const stoveEff = Math.min(95, Math.max(30, h.stoveEffPct ?? 75)) / 100;
+  const steres = kwhPerStere > 0 ? usefulHeat / (kwhPerStere * stoveEff) : 0;
+  const base = pvYield(h.roofM2, climate.pvKwhPerKwc);
+  const pv = { kwc: base.kwc, kwh: base.kwh * (ORIENTATION_FACTOR[h.pvOrientation] ?? 1) };
+  const sc = Math.min(100, Math.max(0, h.selfConsumptionPct ?? 35)) / 100;
+  const elecCov = h.kwhElecYear ? Math.min(100, ((pv.kwh * sc) / h.kwhElecYear) * 100) : 0;
+  return { climate, steres, pv, elecCov, usefulHeat, kwhPerStere };
+}
+
+export function roofCoefficient(material: RoofMaterial) {
+  return ROOF_COEF[material] ?? 0.9;
 }
 
 export function nextActions(profile: Profile, stocks: Record<string, number> = {}, planCount = 0) {

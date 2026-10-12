@@ -3,10 +3,26 @@ import { persist } from "zustand/middleware";
 import type { ClimateId, Setting } from "@/data/types";
 
 export type NoiseTol = "faible" | "moyen" | "eleve";
+export type Activity = "sedentaire" | "moderee" | "active";
+export type Diet = "omnivore" | "flexitarien" | "vegetarien" | "vegan";
+export type Skill = "debutant" | "intermediaire" | "confirme";
+export type SoilId = "argileux" | "sableux" | "limoneux" | "calcaire" | "humifere";
+export type Orientation = "sud" | "sud-est-ouest" | "est-ouest" | "nord";
+export type WoodKind = "feuillus-durs" | "feuillus-tendres" | "resineux";
+export type RoofMaterial = "tuiles" | "metal" | "ardoise" | "plat-gravier" | "vegetalise";
 
 export type Profile = {
   completed: boolean;
   people: number;
+  /** Nombre d’enfants (< 12 ans) parmi les personnes du foyer. */
+  children: number;
+  activity: Activity;
+  diet: Diet;
+  soil: SoilId;
+  skill: Skill;
+  irrigation: boolean;
+  /** Pertes de stockage et de transformation (%). */
+  storageLossPct: number;
   surfaceM2: number;
   gardenM2: number;
   climate: ClimateId;
@@ -24,6 +40,12 @@ export type Profile = {
     heating: "gaz" | "fioul" | "elec" | "bois" | "pac" | "mixte";
     kwhElecYear: number;
     kwhHeatYear: number;
+    pvOrientation: Orientation;
+    selfConsumptionPct: number;
+    stoveEffPct: number;
+    woodKind: WoodKind;
+    woodMoisturePct: number;
+    roofMaterial: RoofMaterial;
   };
   wasteKgWeek: number;
   goals: string[];
@@ -54,6 +76,13 @@ export type LogEntry = {
 export const defaultProfile: Profile = {
   completed: false,
   people: 2,
+  children: 0,
+  activity: "moderee",
+  diet: "omnivore",
+  soil: "limoneux",
+  skill: "debutant",
+  irrigation: true,
+  storageLossPct: 15,
   surfaceM2: 200,
   gardenM2: 80,
   climate: "semi-oceanique",
@@ -71,6 +100,12 @@ export const defaultProfile: Profile = {
     heating: "gaz",
     kwhElecYear: 4500,
     kwhHeatYear: 12000,
+    pvOrientation: "sud",
+    selfConsumptionPct: 35,
+    stoveEffPct: 75,
+    woodKind: "feuillus-durs",
+    woodMoisturePct: 20,
+    roofMaterial: "tuiles",
   },
   wasteKgWeek: 6,
   goals: [],
@@ -201,6 +236,21 @@ export const useHavre = create<State>()(
     }),
     {
       name: "havre-store",
+      // Fusion profonde : un profil enregistré avant l’ajout de nouveaux champs
+      // garde ses valeurs et reçoit les valeurs par défaut manquantes.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<State>;
+        const profile = (p.profile ?? {}) as Partial<Profile>;
+        return {
+          ...current,
+          ...p,
+          profile: {
+            ...defaultProfile,
+            ...profile,
+            housing: { ...defaultProfile.housing, ...(profile.housing ?? {}) },
+          },
+        };
+      },
       onRehydrateStorage: () => (state) => {
         state?.setHydrated();
       },

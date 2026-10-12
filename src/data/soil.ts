@@ -121,6 +121,14 @@ export const AMENDMENTS: Amendment[] = [
     dose: "200–400 g/m², 1 fois / 2–3 ans.",
     caution: "Masque anti-poussière. Ce n’est pas un substitut au compost.",
   },
+  {
+    id: "corne",
+    name: "Corne broyée / sang séché",
+    npk: "≈ 13-0-0 (corne)",
+    use: "Coup de pouce azoté pour les gourmandes en sol pauvre, en attendant que la matière organique travaille.",
+    dose: "50–100 g/m² au printemps, griffé en surface.",
+    caution: "Produits animaux : gants, hors de portée des chiens. Ne remplace pas le compost.",
+  },
 ];
 
 export const COVER_CROPS: CoverCrop[] = [

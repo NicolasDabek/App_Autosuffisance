@@ -5,7 +5,8 @@ import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CROPS, ROTATION_GUIDE, SEED_SAVING } from "@/data/crops";
-import { MONTH_LABELS } from "@/lib/format";
+import { gardenYield } from "@/lib/calculators";
+import { frNumber, MONTH_LABELS } from "@/lib/format";
 import { useHavre } from "@/lib/store";
 
 export const Route = createFileRoute("/_app/potager")({ component: PotagerPage });
@@ -20,11 +21,12 @@ const SEASONS = [
 ] as const;
 
 function PotagerPage() {
-  const garden = useHavre((s) => s.profile.gardenM2);
+  const profile = useHavre((s) => s.profile);
+  const garden = profile.gardenM2;
+  const y = gardenYield(profile);
   const month = new Date().getMonth();
   const now = CROPS.filter((c) => c.monthsSow.includes(month) || c.monthsHarvest.includes(month));
   const gourmandes = CROPS.filter((c) => c.nNeed === "fort");
-  const estimated = Math.round(garden * 2.2);
   const families = useMemo(() => [...new Set(CROPS.map((c) => c.family))].sort(), []);
   const [season, setSeason] = useState<(typeof SEASONS)[number]["id"]>("all");
   const [family, setFamily] = useState<string>("all");
@@ -55,8 +57,18 @@ function PotagerPage() {
         <Card>
           <CardContent className="p-5">
             <p className="text-xs text-muted-foreground">Ordre de grandeur récolte</p>
-            <p className="mt-1 font-display text-2xl font-semibold tabular-nums">~{estimated} kg/an</p>
-            <p className="text-xs text-muted-foreground">2,2 kg/m², mix conservateur</p>
+            <p className="mt-1 font-display text-2xl font-semibold tabular-nums">~{frNumber(y.net, 0)} kg/an</p>
+            <p className="text-xs text-muted-foreground">
+              {frNumber(y.kgM2, 1)} kg/m² (climat ×{frNumber(y.factors.climate, 2)}, sol ×{frNumber(y.factors.soil, 2)},
+              savoir-faire ×{frNumber(y.factors.skill, 2)}, eau ×{frNumber(y.factors.water, 2)}) − {profile.storageLossPct} % de pertes
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Couvre ≈ {frNumber(y.coverPct, 0)} % des {frNumber(y.needKg, 0)} kg de légumes, fruits et pommes de terre du
+              foyer ({profile.diet}). Autonomie légumière : ~{frNumber(y.m2ForFull, 0)} m².{" "}
+              <Link to="/" className="text-primary underline-offset-2 hover:underline">
+                Ajuster
+              </Link>
+            </p>
           </CardContent>
         </Card>
         <Card>

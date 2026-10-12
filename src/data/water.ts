@@ -131,6 +131,26 @@ export const WATER: WaterTopic[] = [
     sizing: "Quelques litres / jour par m² de vitrage au mieux. Pas un plan d’autonomie.",
     savings: "Proche de zéro en kWh, proche de zéro en litres utiles au foyer.",
   },
+  {
+    id: "sobriete-eau",
+    name: "Sobriété domestique",
+    summary:
+      "Un Français consomme en moyenne ~145 L d’eau potable par jour. Douche, chasse d’eau et lave-linge font l’essentiel : c’est là que se gagnent les premiers m³.",
+    uses: ["Mousseurs et douchette économe (6–8 L/min)", "Chasse double débit", "Chasse d’eau à l’eau de pluie (réseau séparé)", "Lave-linge et lave-vaisselle pleins, en mode éco"],
+    legal: "Libre. Toilettes sèches : autorisées, à condition de composter les matières sans nuisance (voir Déchets → sol).",
+    sizing: "Foyer de 4 : ~210 m³/an au réseau. −20 à −30 % avec mousseurs, douches courtes et chasse économe ; jusqu’à −40 % avec WC à la pluie ou toilettes sèches.",
+    savings: "Plusieurs dizaines à centaines d’euros par an selon le prix local du m³ (eau + assainissement), et autant d’eau de cuve gardée pour l’été.",
+  },
+  {
+    id: "arrosage-raisonne",
+    name: "Arroser moins, mieux",
+    summary:
+      "Un arrosage profond et espacé pousse les racines à descendre. Le petit arrosage quotidien du soir garde les racines en surface et nourrit les limaces.",
+    uses: ["Arroser au pied, tôt le matin", "1 arrosage de 10–20 L/m² par semaine plutôt que 7 petits", "Biner : « un binage vaut deux arrosages »", "Tensiomètre ou doigt dans la terre à 5 cm avant d’ouvrir le robinet"],
+    legal: "Respecter les arrêtés sécheresse : horaires et usages restreints, y compris parfois pour l’eau de puits.",
+    sizing: "Potager paillé en été : ~3 à 5 L/m²/jour d’évapotranspiration en canicule ; sans paillage, nettement plus.",
+    savings: "Souvent 30–50 % d’eau d’arrosage en moins, et des plantes plus résistantes au coup de chaud.",
+  },
 ];
 
 export function rainCollectable(roofM2: number, mmYear: number, efficiency = 0.5) {

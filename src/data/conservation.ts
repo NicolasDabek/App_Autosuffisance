@@ -296,6 +296,50 @@ export const CONSERVE: ConserveMethod[] = [
     pitfalls: ["Bocal trop serré", "Eau stagnante", "Graines non alimentaires"],
     legal: "Foyer. Vente de germes : hygiène stricte (historique de toxi-infections).",
   },
+  {
+    id: "legumineuses-seches",
+    name: "Légumineuses et céréales sèches",
+    summary:
+      "Haricots, lentilles, pois chiches, fèves, maïs à grain : la protéine qui se garde des années si elle est bien sèche et à l’abri des bruches.",
+    bestFor: ["Haricots à écosser secs (lingots, cocos)", "Fèves, pois secs, lentilles", "Maïs, sarrasin, blé en petites quantités"],
+    notFor: ["Grains encore mous à l’ongle", "Lots moisis ou échauffés", "Haricots crus en grande quantité (toujours tremper et cuire)"],
+    steps: [
+      "Laisser sécher les gousses sur pied, finir à l’abri ventilé jusqu’à ce que le grain casse sous la dent",
+      "Battre (sac + bâton), vanner au vent ou au ventilateur, trier les grains piqués",
+      "Contre les bruches : 48–72 h au congélateur (−18 °C) puis remise à température avant bocal",
+      "Bocaux ou seaux hermétiques, étiquetés avec l’année ; garder les plus beaux comme semences",
+    ],
+    duration: "1–2 ans en qualité culinaire (la cuisson s’allonge avec l’âge)",
+    storage: "Sec, frais, sombre, hermétique. Un grain qui sent le moisi ne se « rattrape » pas.",
+    pitfalls: [
+      "Bocal fermé sur un grain pas assez sec : moisissures et mycotoxines",
+      "Oublier la congélation : les bruches sortent au printemps",
+      "Haricots rouges insuffisamment cuits : phytohémagglutinine (bouillir au moins 10 min)",
+    ],
+    legal: "Foyer : libre. Semences réutilisées : libres pour le jardin du foyer.",
+  },
+  {
+    id: "oeufs-garde",
+    name: "Garder les œufs du poulailler",
+    summary:
+      "Au printemps, les poules pondent plus qu’on ne mange ; en hiver, presque plus. Lisser la ponte demande méthode et un œuf non lavé.",
+    bestFor: ["Œufs propres, non lavés (cuticule intacte)", "Surplus d’avril à juin"],
+    notFor: ["Œufs fêlés ou très sales", "Œufs lavés (cuticule retirée)", "Préparations crues pour personnes fragiles"],
+    steps: [
+      "Ramasser chaque jour, dater au crayon, ne pas laver ; brosser à sec si besoin",
+      "Frais : 28 jours après la ponte à température ambiante stable, plus au frais (garder à l’écart des odeurs)",
+      "Congélation : battus (blanc + jaune, une pincée de sel ou de sucre), en portions, 10–12 mois",
+      "Méthode traditionnelle à l’eau de chaux : possible mais réservée à la cuisson, mirer chaque œuf avant usage",
+    ],
+    duration: "4 semaines frais, ~1 an congelés",
+    storage: "Pointe en bas, 10–15 °C ou réfrigérateur, sans écarts de température (condensation).",
+    pitfalls: [
+      "Laver puis stocker : bactéries qui passent la coquille",
+      "Congeler un œuf entier en coquille : il éclate",
+      "Test de flottaison pris pour une garantie sanitaire : il indique l’âge, pas l’absence de salmonelle",
+    ],
+    legal: "Autoconsommation : libre. Vente ou don régulier : déclaration, marquage et règles sanitaires (voir Cadre légal).",
+  },
 ];
 
 export const CONSERVE_CALENDAR: { month: number; focus: string }[] = [

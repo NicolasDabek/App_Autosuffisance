@@ -14,7 +14,7 @@ import { ANIMALS } from "@/data/animals";
 import { CALENDAR } from "@/data/calendar";
 import { CHAINS } from "@/data/chains";
 import { CLIMATES } from "@/data/climate";
-import { energyStats, foodAutonomy, nextActions, rankChains, wasteStats } from "@/lib/calculators";
+import { energyStats, foodAutonomy, gardenYield, nextActions, rankChains, wasteStats } from "@/lib/calculators";
 import { currentMonthIndex, frNumber, monthLabel } from "@/lib/format";
 import { useHavre } from "@/lib/store";
 
@@ -34,10 +34,12 @@ const GOALS = [
 function Dashboard() {
   const profile = useHavre((s) => s.profile);
   const logs = useHavre((s) => s.logs);
+  const patchProfile = useHavre((s) => s.patchProfile);
   const month = currentMonthIndex();
   const food = foodAutonomy(profile, logs);
   const waste = wasteStats(profile, logs, "compost");
   const energy = energyStats(profile);
+  const garden = gardenYield(profile);
   const ranked = rankChains(profile);
   const best = ranked.find((r) => r.compatible);
   const tasks = CALENDAR.filter((t) => t.month === month);
@@ -57,13 +59,25 @@ function Dashboard() {
         }
       />
 
-      {!profile.completed ? <Onboarding /> : null}
+      {!profile.completed ? (
+        <Onboarding />
+      ) : (
+        <div className="mb-6 flex justify-end">
+          <Button variant="outline" size="sm" onClick={() => patchProfile({ completed: false })}>
+            Modifier le profil du foyer
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Stat
           label="Autonomie alimentaire"
           value={`${frNumber(food.pct, 0)} %`}
-          hint={food.produced ? `${frNumber(food.produced / 1000, 0)} k kcal journalisées / ${frNumber(food.need / 1000, 0)} k` : "Journalisez récoltes et œufs"}
+          hint={
+            food.produced
+              ? `${frNumber(food.produced / 1000, 0)} k kcal nettes (pertes ${profile.storageLossPct} %) / ${frNumber(food.need / 1000, 0)} k`
+              : `Potentiel potager ≈ ${frNumber(garden.coverPct, 0)} % des légumes · journalisez vos récoltes`
+          }
         />
         <Stat
           label="Biodéchets valorisés"
@@ -73,7 +87,7 @@ function Dashboard() {
         <Stat
           label="Bois si 100 % chaleur"
           value={`${frNumber(energy.steres, 1)} st`}
-          hint={`${energy.climate.name} · isolation ${profile.housing.insulation}`}
+          hint={`${energy.climate.name} · poêle ${profile.housing.stoveEffPct} % · bois ${profile.housing.woodMoisturePct} % d’humidité`}
         />
       </div>
 
@@ -214,7 +228,7 @@ function Onboarding() {
               min={1}
               emptyValue={1}
               value={profile.people}
-              onValueChange={(people) => patch({ people })}
+              onValueChange={(people) => patch({ people, children: Math.min(profile.children, Math.max(0, people - 1)) })}
             />
           </Field>
           <Field label="Terrain (m²)">
@@ -238,6 +252,85 @@ function Onboarding() {
               min={0}
               value={profile.hoursPerWeek}
               onValueChange={(hoursPerWeek) => patch({ hoursPerWeek })}
+            />
+          </Field>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field label="Dont enfants (< 12 ans)">
+            <NumberField
+              integer
+              min={0}
+              max={Math.max(0, profile.people - 1)}
+              value={profile.children}
+              onValueChange={(children) => patch({ children })}
+            />
+          </Field>
+          <Field label="Activité physique">
+            <Choice
+              value={profile.activity}
+              onChange={(activity) => patch({ activity })}
+              options={[
+                ["sedentaire", "Sédentaire (~2 000 kcal/j)"],
+                ["moderee", "Modérée (~2 300 kcal/j)"],
+                ["active", "Active / travaux (~2 700 kcal/j)"],
+              ]}
+            />
+          </Field>
+          <Field label="Régime alimentaire">
+            <Choice
+              value={profile.diet}
+              onChange={(diet) => patch({ diet })}
+              options={[
+                ["omnivore", "Omnivore"],
+                ["flexitarien", "Flexitarien"],
+                ["vegetarien", "Végétarien"],
+                ["vegan", "Végétalien"],
+              ]}
+            />
+          </Field>
+          <Field label="Pertes stockage / transfo (%)">
+            <NumberField
+              integer
+              min={0}
+              max={90}
+              value={profile.storageLossPct}
+              onValueChange={(storageLossPct) => patch({ storageLossPct })}
+            />
+          </Field>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field label="Sol dominant">
+            <Choice
+              value={profile.soil}
+              onChange={(soil) => patch({ soil })}
+              options={[
+                ["limoneux", "Limoneux"],
+                ["argileux", "Argileux"],
+                ["sableux", "Sableux"],
+                ["calcaire", "Calcaire / caillouteux"],
+                ["humifere", "Humifère / forestier"],
+              ]}
+            />
+          </Field>
+          <Field label="Expérience au potager">
+            <Choice
+              value={profile.skill}
+              onChange={(skill) => patch({ skill })}
+              options={[
+                ["debutant", "Débutant (1–2 saisons)"],
+                ["intermediaire", "Intermédiaire"],
+                ["confirme", "Confirmé (planches denses)"],
+              ]}
+            />
+          </Field>
+          <Field label="Arrosage d’été">
+            <Choice
+              value={profile.irrigation ? "oui" : "non"}
+              onChange={(v) => patch({ irrigation: v === "oui" })}
+              options={[
+                ["oui", "Oui (cuve, réseau, goutte-à-goutte)"],
+                ["non", "Non, pluie seule"],
+              ]}
             />
           </Field>
         </div>
@@ -390,6 +483,31 @@ function Onboarding() {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function Choice<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: [T, string][];
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as T)}>
+      <SelectTrigger>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map(([id, label]) => (
+          <SelectItem key={id} value={id}>
+            {label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 

@@ -228,8 +228,12 @@ export const SEED_LIFE: { id: string; name: string; years: string; note: string 
   { id: "fleurs-sem", name: "Souci, capucine, phacélie", years: "2–4 ans", note: "Utiles aux auxiliaires. Récolter sec, tamiser." },
 ];
 
+/** `people` peut être un équivalent adulte (enfant ≈ 0,6). */
 export function stockTarget(item: StockDef, people: number, steres: number) {
-  if (item.per === "person") return item.qty * Math.max(1, people);
+  if (item.per === "person") {
+    const v = item.qty * Math.max(1, people);
+    return item.integer ? Math.ceil(v) : Math.round(v * 10) / 10;
+  }
   if (item.per === "heat") return Math.max(0.5, Math.round(steres * 10) / 10);
   return item.qty;
 }

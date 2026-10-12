@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { SEED_LIFE, STOCK_GROUPS, STOCKS, stockTarget } from "@/data/stocks";
-import { energyStats } from "@/lib/calculators";
+import { energyStats, household } from "@/lib/calculators";
 import { frNumber } from "@/lib/format";
 import { useHavre } from "@/lib/store";
 
@@ -18,9 +18,10 @@ function GardePage() {
   const setStock = useHavre((s) => s.setStock);
   const hydrated = useHavre((s) => s.hydrated);
   const steres = energyStats(profile).steres;
+  const hh = household(profile);
 
   const rows = STOCKS.map((item) => {
-    const target = stockTarget(item, profile.people, steres);
+    const target = stockTarget(item, hh.adultEq, steres);
     const qty = hydrated ? (stocks[item.id] ?? 0) : 0;
     const pct = target > 0 ? Math.min(100, (qty / target) * 100) : 0;
     return { item, target, qty, pct };
@@ -40,6 +41,9 @@ function GardePage() {
           <CardContent className="p-5">
             <p className="text-xs text-muted-foreground">Foyer</p>
             <p className="font-display text-2xl tabular-nums">{profile.people} pers.</p>
+            <p className="text-xs text-muted-foreground">
+              {hh.children ? `dont ${hh.children} enfant(s) · ` : ""}≈ {frNumber(hh.adultEq, 1)} équivalent adulte
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -55,7 +59,7 @@ function GardePage() {
             <p className="text-xs text-muted-foreground">Bois si tout le chauffage</p>
             <p className="font-display text-2xl tabular-nums">{frNumber(steres, 1)} st</p>
             <Link to="/energie" className="text-xs text-primary underline-offset-2 hover:underline">
-              Ajuster le logement
+              Ajuster bois et poêle
             </Link>
           </CardContent>
         </Card>

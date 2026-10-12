@@ -5,8 +5,10 @@ import { NumberField } from "@/components/number-field";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WATER, rainCollectable } from "@/data/water";
 import { climateById } from "@/data/climate";
+import { roofCoefficient } from "@/lib/calculators";
 import { frNumber } from "@/lib/format";
 import { useHavre } from "@/lib/store";
 
@@ -23,9 +25,13 @@ const MM: Record<string, number> = {
 
 function EauPage() {
   const profile = useHavre((s) => s.profile);
-  const [roof, setRoof] = useState(profile.housing.roofM2);
+  const patchHousing = useHavre((s) => s.patchHousing);
+  const [overflowPct, setOverflowPct] = useState(20);
+  const roof = profile.housing.roofM2;
   const mm = MM[profile.climate] ?? 700;
-  const litres = rainCollectable(roof, mm);
+  const coef = roofCoefficient(profile.housing.roofMaterial);
+  const efficiency = coef * (1 - overflowPct / 100);
+  const litres = rainCollectable(roof, mm, efficiency);
   const climate = climateById(profile.climate);
 
   return (
@@ -42,15 +48,37 @@ function EauPage() {
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-1.5">
-            <Label>Toiture (m²)</Label>
-            <NumberField integer min={0} value={roof} onValueChange={setRoof} />
+            <Label>Toiture raccordée (m², au sol)</Label>
+            <NumberField integer min={0} value={roof} onValueChange={(roofM2) => patchHousing({ roofM2 })} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Couverture</Label>
+            <Select
+              value={profile.housing.roofMaterial}
+              onValueChange={(v) => patchHousing({ roofMaterial: v as typeof profile.housing.roofMaterial })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="tuiles">Tuiles (coef. 0,9)</SelectItem>
+                <SelectItem value="ardoise">Ardoise (0,9)</SelectItem>
+                <SelectItem value="metal">Bac acier / zinc (0,95)</SelectItem>
+                <SelectItem value="plat-gravier">Toit plat gravillonné (0,6)</SelectItem>
+                <SelectItem value="vegetalise">Toit végétalisé (0,3)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Pertes débordement / premier flot (%)</Label>
+            <NumberField integer min={0} max={90} value={overflowPct} onValueChange={setOverflowPct} />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Pluviométrie {climate.name}</p>
             <p className="font-display text-2xl tabular-nums">{mm} mm</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Collectable (~50 % de rendement)</p>
+            <p className="text-xs text-muted-foreground">Collectable (~{frNumber(efficiency * 100, 0)} % de rendement)</p>
             <p className="font-display text-2xl tabular-nums">{frNumber(litres / 1000, 1)} m³/an</p>
           </div>
           <p className="sm:col-span-3 text-sm text-muted-foreground">
