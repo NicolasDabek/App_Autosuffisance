@@ -11,7 +11,7 @@ import { CROPS } from "@/data/crops";
 import { seedRateFor } from "@/data/seed-rates";
 import { MONTH_LABELS, currentMonthIndex, frNumber } from "@/lib/format";
 import { gardenYield } from "@/lib/calculators";
-import { useHavre } from "@/lib/store";
+import { useHavre, usePref } from "@/lib/store";
 
 export const Route = createFileRoute("/_app/semis")({ component: SemisPage });
 
@@ -35,8 +35,8 @@ function seedText(qty: number, unit: string, lossPct: number) {
 function SemisPage() {
   const profile = useHavre((s) => s.profile);
   const gardenTotal = profile.gardenM2;
-  const [pathsPct, setPathsPct] = useState(25);
-  const [lossPct, setLossPct] = useState(20);
+  const [pathsPct, setPathsPct] = usePref("pathsPct");
+  const [lossPct, setLossPct] = usePref("sowLossPct");
   const garden = Math.round(gardenTotal * (1 - Math.min(60, Math.max(0, pathsPct)) / 100) * 10) / 10;
   const site = gardenYield(profile).kgM2 / 2.2;
   const planIds = useHavre((s) => s.planIds) ?? [];

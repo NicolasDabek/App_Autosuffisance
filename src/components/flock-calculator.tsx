@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
-import { useState } from "react";
 import { NumberField } from "@/components/number-field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { household } from "@/lib/calculators";
 import { frEuro, frNumber } from "@/lib/format";
-import { useHavre } from "@/lib/store";
+import { useHavre, usePref } from "@/lib/store";
 
 /** Ponte annuelle de 1re année selon le type de poule (ordres de grandeur). */
 const BREEDS = {
@@ -23,13 +22,13 @@ type Age = keyof typeof AGE_FACTOR;
 export function FlockCalculator() {
   const profile = useHavre((s) => s.profile);
   const hh = household(profile);
-  const [hens, setHens] = useState(4);
-  const [breed, setBreed] = useState<Breed>("mixte");
-  const [age, setAge] = useState<Age>("1");
-  const [moultWeeks, setMoultWeeks] = useState(8);
-  const [rangePct, setRangePct] = useState(20);
-  const [feedEur, setFeedEur] = useState(0.6);
-  const [eggsPerAdultWeek, setEggsPerAdultWeek] = useState(4);
+  const [hens, setHens] = usePref("hens");
+  const [breed, setBreed] = usePref("breed");
+  const [age, setAge] = usePref("layAge");
+  const [moultWeeks, setMoultWeeks] = usePref("moultWeeks");
+  const [rangePct, setRangePct] = usePref("rangePct");
+  const [feedEur, setFeedEur] = usePref("feedEur");
+  const [eggsPerAdultWeek, setEggsPerAdultWeek] = usePref("eggsPerAdultWeek");
 
   // La pause de mue/hiver est déjà partiellement incluse dans les moyennes : on n’en retire que l’excédent au-delà de 6 semaines.
   const extraPause = Math.max(0, Math.min(26, moultWeeks) - 6) / 52;

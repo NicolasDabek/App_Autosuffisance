@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { CONSERVE } from "@/data/conservation";
 import { RECIPES } from "@/data/recipes";
+import { usePref } from "@/lib/store";
 import { currentMonthIndex, frNumber } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/atelier")({ component: AtelierPage });
@@ -23,8 +24,8 @@ function AtelierPage() {
   const [id, setId] = useState(RECIPES[0].id);
   const recipe = RECIPES.find((r) => r.id === id) ?? RECIPES[0];
   const [kg, setKg] = useState(recipe.baseKg);
-  const [trimPct, setTrimPct] = useState(0);
-  const [jarFillPct, setJarFillPct] = useState(100);
+  const [trimPct, setTrimPct] = usePref("trimPct");
+  const [jarFillPct, setJarFillPct] = usePref("jarFillPct");
   const netKg = kg * (1 - Math.min(80, Math.max(0, trimPct)) / 100);
   const scale = recipe.baseKg > 0 ? netKg / recipe.baseKg : 0;
   const fill = Math.min(150, Math.max(50, jarFillPct)) / 100;
@@ -51,7 +52,6 @@ function AtelierPage() {
                   onClick={() => {
                     setId(r.id);
                     setKg(r.baseKg);
-                    setTrimPct(0);
                   }}
                   className={`w-full rounded-lg border px-3 py-3 text-left ${on ? "border-primary bg-muted/60" : "border-border hover:bg-muted/40"}`}
                 >
