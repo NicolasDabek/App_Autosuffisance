@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { CROPS } from "@/data/crops";
 import { seedRateFor } from "@/data/seed-rates";
 import { MONTH_LABELS, currentMonthIndex, frNumber } from "@/lib/format";
+import { gardenYield } from "@/lib/calculators";
 import { useHavre } from "@/lib/store";
 
 export const Route = createFileRoute("/_app/semis")({ component: SemisPage });
@@ -24,8 +25,20 @@ function allocate(ids: string[], garden: number, areas: Record<string, number>) 
   return { out, customSum, share };
 }
 
+/** Semence majorée des pertes ; plants et graines comptés en unités entières. */
+function seedText(qty: number, unit: string, lossPct: number) {
+  const v = qty / (1 - Math.min(70, Math.max(0, lossPct)) / 100);
+  if (unit !== "g") return frNumber(Math.ceil(v), 0);
+  return frNumber(v, v >= 10 ? 0 : 1);
+}
+
 function SemisPage() {
-  const garden = useHavre((s) => s.profile.gardenM2);
+  const profile = useHavre((s) => s.profile);
+  const gardenTotal = profile.gardenM2;
+  const [pathsPct, setPathsPct] = useState(25);
+  const [lossPct, setLossPct] = useState(20);
+  const garden = Math.round(gardenTotal * (1 - Math.min(60, Math.max(0, pathsPct)) / 100) * 10) / 10;
+  const site = gardenYield(profile).kgM2 / 2.2;
   const planIds = useHavre((s) => s.planIds) ?? [];
   const planM2 = useHavre((s) => s.planM2) ?? {};
   const toggle = useHavre((s) => s.togglePlan);
@@ -42,7 +55,7 @@ function SemisPage() {
   const selected = CROPS.filter((c) => ids.includes(c.id));
   const { out, customSum } = allocate(ids, garden, areas);
   const assigned = selected.reduce((acc, c) => acc + (out[c.id] ?? 0), 0);
-  const kilos = selected.reduce((acc, c) => acc + (out[c.id] ?? 0) * c.yieldKgM2, 0);
+  const kilos = selected.reduce((acc, c) => acc + (out[c.id] ?? 0) * c.yieldKgM2 * site, 0);
 
   const familyArea = new Map<string, number>();
   for (const c of selected) familyArea.set(c.family, (familyArea.get(c.family) ?? 0) + (out[c.id] ?? 0));
@@ -62,7 +75,8 @@ function SemisPage() {
         <Card>
           <CardContent className="p-5">
             <p className="text-xs text-muted-foreground">Potager déclaré</p>
-            <p className="font-display text-2xl tabular-nums">{garden} m²</p>
+            <p className="font-display text-2xl tabular-nums">{frNumber(garden, 0)} m² cultivés</p>
+            <p className="text-xs text-muted-foreground">sur {gardenTotal} m² déclarés</p>
             <Link to="/" className="text-xs text-primary underline-offset-2 hover:underline">
               Ajuster sur le tableau de bord
             </Link>
@@ -79,14 +93,27 @@ function SemisPage() {
           <CardContent className="p-5">
             <p className="text-xs text-muted-foreground">Ordre de grandeur</p>
             <p className="font-display text-2xl tabular-nums">~{frNumber(kilos, 0)} kg</p>
-            <p className="text-xs text-muted-foreground">si l’année n’est pas mauvaise</p>
+            <p className="text-xs text-muted-foreground">
+              climat, sol, savoir-faire et arrosage du profil (×{frNumber(site, 2)})
+            </p>
           </CardContent>
         </Card>
       </div>
 
+      <div className="mb-6 grid max-w-xl gap-4 sm:grid-cols-2">
+        <div className="grid gap-1.5">
+          <Label htmlFor="paths">Allées et passe-pieds (%)</Label>
+          <NumberField id="paths" integer min={0} max={60} value={pathsPct} onValueChange={setPathsPct} />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="loss">Pertes à la levée / repiquage (%)</Label>
+          <NumberField id="loss" integer min={0} max={70} value={lossPct} onValueChange={setLossPct} />
+        </div>
+      </div>
+
       {customSum > garden + 0.05 ? (
         <p className="mb-4 rounded-lg border border-border bg-muted/60 px-3 py-2 text-sm">
-          Les mètres saisis à la main ({frNumber(customSum, 1)}) dépassent le potager ({garden} m²). Le reste des cultures tombe à zéro tant que ce n’est pas corrigé.
+          Les mètres saisis à la main ({frNumber(customSum, 1)}) dépassent la surface cultivée ({frNumber(garden, 1)} m²). Le reste des cultures tombe à zéro tant que ce n’est pas corrigé.
         </p>
       ) : ids.length > 0 && ids.every((id) => (areas[id] ?? 0) > 0) && garden - customSum > 0.5 ? (
         <p className="mb-4 rounded-lg border border-border bg-muted/60 px-3 py-2 text-sm">
@@ -165,11 +192,11 @@ function SemisPage() {
                       emptyValue={0}
                     />
                     <p className="text-muted-foreground">
-                      Affecté {frNumber(m2, 1)} m² · ~{frNumber(m2 * c.yieldKgM2, 1)} kg · besoin azote {c.nNeed}
+                      Affecté {frNumber(m2, 1)} m² · ~{frNumber(m2 * c.yieldKgM2 * site, 1)} kg · besoin azote {c.nNeed}
                     </p>
                     {rate ? (
                       <p className="text-muted-foreground">
-                        Semence ≈ {frNumber(rate.perM2 * m2, rate.perM2 * m2 >= 10 ? 0 : 1)} {rate.unit}. {rate.note}
+                        Semence ≈ {seedText(rate.perM2 * m2, rate.unit, lossPct)} {rate.unit}. {rate.note}
                       </p>
                     ) : (
                       <p className="text-muted-foreground">Dose de semence : voir le sachet, la fiche ne fixe pas de grammage.</p>

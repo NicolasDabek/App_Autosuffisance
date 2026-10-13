@@ -159,6 +159,7 @@ export const WASTE_INPUTS = [
   { id: "marc", label: "Marc de café / thé", kgWeekDefault: 0.4 },
   { id: "jardin", label: "Tontes et déchets verts", kgWeekDefault: 3 },
   { id: "carton", label: "Carton / papier brun", kgWeekDefault: 0.3 },
+  { id: "broyat", label: "Feuilles mortes / broyat (bruns)", kgWeekDefault: 1 },
   { id: "cuits", label: "Restes cuits (sans viande)", kgWeekDefault: 0.6 },
 ] as const;
 

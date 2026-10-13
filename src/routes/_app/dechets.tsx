@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Disclaimer } from "@/components/disclaimer";
+import { NumberField } from "@/components/number-field";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/_app/dechets")({ component: DechetsPage }
 
 function DechetsPage() {
   const garden = useHavre((s) => s.profile.gardenM2);
+  const patchProfile = useHavre((s) => s.patchProfile);
   const [inputs, setInputs] = useState<Record<string, number>>(() =>
     Object.fromEntries(WASTE_INPUTS.map((i) => [i.id, i.kgWeekDefault])),
   );
@@ -24,6 +26,9 @@ function DechetsPage() {
     () => Object.values(inputs).reduce((a, b) => a + b, 0),
     [inputs],
   );
+  const browns = (inputs.carton ?? 0) + (inputs.broyat ?? 0);
+  const brownPct = weekly > 0 ? (browns / weekly) * 100 : 0;
+  const [coverKgM2, setCoverKgM2] = useState(3);
   const yearIn = weekly * 52;
   const yearOut = yearIn * method.conversion;
   const weeks = method.timeWeeks;
@@ -60,6 +65,15 @@ function DechetsPage() {
             <p className="text-sm text-muted-foreground">
               Total {frNumber(weekly, 1)} kg / sem. · {frNumber(yearIn, 0)} kg / an
             </p>
+            <p className={`text-sm ${brownPct < 25 && weekly > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+              Bruns (carbone) : {frNumber(brownPct, 0)} % du poids.{" "}
+              {brownPct < 25
+                ? "Trop de verts : compost tassé et odorant. Visez au moins un tiers de bruns en volume."
+                : "Équilibre carbone / azote correct."}
+            </p>
+            <Button variant="outline" size="sm" onClick={() => patchProfile({ wasteKgWeek: Math.round(weekly * 10) / 10 })}>
+              Utiliser ce total dans le tableau de bord
+            </Button>
           </CardContent>
         </Card>
 
@@ -109,7 +123,7 @@ function DechetsPage() {
         </div>
       </div>
 
-      <h2 className="mt-10 font-display text-xl font-semibold">Plan d’apports ({garden || 80} m²)</h2>
+      <h2 className="mt-10 font-display text-xl font-semibold">Plan d’apports ({garden} m² de potager)</h2>
       <div className="mt-3 overflow-x-auto rounded-xl bg-card shadow-[var(--shadow-border)]">
         <table className="w-full min-w-[520px] text-left text-sm">
           <thead className="border-b border-border text-xs uppercase tracking-wider text-muted-foreground">
@@ -132,7 +146,11 @@ function DechetsPage() {
       </div>
       <p className="mt-4 text-sm text-muted-foreground">
         Avec {frNumber(yearOut, 0)} kg, vous pouvez amender environ{" "}
-        {frNumber(yearOut / 3, 0)} m² de planches gourmandes.{" "}
+        {frNumber(yearOut / Math.max(0.5, coverKgM2), 0)} m² de planches gourmandes à{" "}
+        <span className="inline-block w-20 align-middle">
+          <NumberField min={0.5} max={10} emptyValue={3} value={coverKgM2} onValueChange={setCoverKgM2} aria-label="Dose de compost en kg/m²" />
+        </span>{" "}
+        kg/m².{" "}
         <Link to="/potager" className="text-primary underline-offset-2 hover:underline">
           Voir les cultures
         </Link>
