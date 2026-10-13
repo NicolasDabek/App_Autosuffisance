@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Disclaimer } from "@/components/disclaimer";
+import { FlockCalculator } from "@/components/flock-calculator";
 import { LegalBadge } from "@/components/legal-badge";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -12,10 +13,10 @@ export const Route = createFileRoute("/_app/elevage/$id")({ component: AnimalPag
 
 function AnimalPage() {
   const { id } = Route.useParams();
-  const a = animalById(id);
-  if (!a) throw notFound();
   const toggle = useHavre((s) => s.toggleAnimal);
   const present = useHavre((s) => s.profile.animalsPresent.includes(id));
+  const a = animalById(id);
+  if (!a) throw notFound();
   const related = CHAINS.filter((c) => c.animalIds.includes(id));
 
   return (
@@ -48,6 +49,8 @@ function AnimalPage() {
         <Fact k="Cadres" v={a.settings.join(", ")} />
         <Fact k="Climats" v={a.climates === "all" ? "Tous" : a.climates.join(", ")} />
       </div>
+
+      {a.id === "poules" ? <FlockCalculator /> : null}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card>

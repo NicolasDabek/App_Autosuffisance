@@ -334,6 +334,26 @@ export const PESTS: GardenPest[] = [
     intervention: "Ramassage à la lampe. Bt seulement si le produit vise ces chenilles et que l’AMM le dit.",
     legal: "Bt est un produit, pas une poudre du placard. Collerette et ramassage n’ont pas besoin d’autorisation.",
   },
+  {
+    id: "taupin",
+    name: "Taupins (larves)",
+    crops: ["Pomme de terre", "Carotte", "Laitue", "Maïs"],
+    signs: "Galeries fines et rondes dans les tubercules, plants qui flétrissent. Larves jaune-orangé, rigides, 1–3 cm.",
+    prevention:
+      "Fréquents l’année qui suit une prairie ou une pelouse retournée : y mettre d’abord des engrais verts ou des choux, pas des pommes de terre. Travail superficiel répété du sol en été.",
+    intervention: "Pièges : moitiés de pomme de terre enterrées à 10 cm, relevées tous les 3–4 jours. Récolter les tubercules sans tarder à maturité.",
+    legal: "Pas de traitement de sol chimique pour le jardinier amateur : méthodes culturales et pièges.",
+  },
+  {
+    id: "aleurode",
+    name: "Aleurodes (mouches blanches)",
+    crops: ["Tomate et aubergine sous serre", "Choux"],
+    signs: "Nuage de petits insectes blancs quand on secoue le feuillage, miellat collant puis fumagine noire.",
+    prevention: "Aérer la serre, éviter l’excès d’azote, planter œillets d’Inde et capucines pour attirer les auxiliaires.",
+    intervention:
+      "Panneaux jaunes englués en serre (retirer s’ils piègent trop d’auxiliaires), douche d’eau sous les feuilles. Lâchers d’Encarsia formosa possibles sous abri.",
+    legal: "Produits utilisables au jardin : uniquement ceux portant la mention « emploi autorisé au jardin » (loi Labbé).",
+  },
 ];
 
 export const AUXILIARIES: Auxiliary[] = [
@@ -406,5 +426,19 @@ export const AUXILIARIES: Auxiliary[] = [
     role: "Galeries, drainage, incorporation du paillis. Le labour profond les coupe en deux, au sens propre.",
     habitat: "Sol couvert, compost en surface, pas de sol nu battu par la pluie.",
     plants: "Engrais verts, paillis mince, fumier composté. Un ver est un auxiliaire, pas un appât à exporter.",
+  },
+  {
+    id: "osmie",
+    name: "Abeilles sauvages (osmies)",
+    role: "Pollinisatrices précoces très efficaces des fruitiers (pommiers, cerisiers) dès 12 °C, quand l’abeille domestique sort peu.",
+    habitat: "Tiges creuses, bûches percées (trous de 6–8 mm, sans échardes), à l’abri de la pluie, face sud-est, à 1 m du sol.",
+    plants: "Saules, fruitiers, bourrache, phacélie. Garder un coin de terre nue et de la boue pour leurs cloisons.",
+  },
+  {
+    id: "orvet",
+    name: "Orvet",
+    role: "Lézard sans pattes (pas un serpent), grand mangeur de limaces et de vers gris.",
+    habitat: "Tas de bois, pierres, compost tiède, tôles posées au sol.",
+    plants: "Bandes enherbées, haies. Espèce protégée : ne pas capturer.",
   },
 ];

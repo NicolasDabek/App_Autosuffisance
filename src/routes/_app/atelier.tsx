@@ -23,7 +23,12 @@ function AtelierPage() {
   const [id, setId] = useState(RECIPES[0].id);
   const recipe = RECIPES.find((r) => r.id === id) ?? RECIPES[0];
   const [kg, setKg] = useState(recipe.baseKg);
-  const scale = recipe.baseKg > 0 ? kg / recipe.baseKg : 0;
+  const [trimPct, setTrimPct] = useState(0);
+  const [jarFillPct, setJarFillPct] = useState(100);
+  const netKg = kg * (1 - Math.min(80, Math.max(0, trimPct)) / 100);
+  const scale = recipe.baseKg > 0 ? netKg / recipe.baseKg : 0;
+  const fill = Math.min(150, Math.max(50, jarFillPct)) / 100;
+  const jarsNeeded = recipe.jars * scale > 0 ? Math.ceil((recipe.jars * scale) / fill) : 0;
   const method = CONSERVE.find((m) => m.id === recipe.method);
 
   return (
@@ -46,6 +51,7 @@ function AtelierPage() {
                   onClick={() => {
                     setId(r.id);
                     setKg(r.baseKg);
+                    setTrimPct(0);
                   }}
                   className={`w-full rounded-lg border px-3 py-3 text-left ${on ? "border-primary bg-muted/60" : "border-border hover:bg-muted/40"}`}
                 >
@@ -83,6 +89,20 @@ function AtelierPage() {
               />
               <p className="mt-1 text-xs text-muted-foreground">Recette de référence : {frNumber(recipe.baseKg, recipe.baseKg < 1 ? 1 : 0)} kg.</p>
             </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="trim">Parage / épluchures (%)</Label>
+                <NumberField id="trim" className="mt-1.5" integer min={0} max={80} value={trimPct} onValueChange={setTrimPct} />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Poids net transformé : {frNumber(netKg, netKg < 10 ? 1 : 0)} kg. Tomates à monder ~10 %, pommes ~20 %, fruits à noyau ~10 %.
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="fill">Remplissage des pots vs recette (%)</Label>
+                <NumberField id="fill" className="mt-1.5" integer min={50} max={150} emptyValue={100} value={jarFillPct} onValueChange={setJarFillPct} />
+                <p className="mt-1 text-xs text-muted-foreground">Moins de 100 % si les morceaux sont gros ou si vos pots sont plus petits.</p>
+              </div>
+            </div>
             <div>
               <h3 className="text-sm font-medium">Pour cette pesée</h3>
               <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
@@ -92,7 +112,7 @@ function AtelierPage() {
                   </li>
                 ))}
                 <li>
-                  Contenants — {scaledText(recipe.jars, scale)} × {recipe.jarSize}
+                  Contenants — {jarsNeeded} × {recipe.jarSize} (arrondi au pot entier)
                 </li>
               </ul>
             </div>

@@ -638,4 +638,21 @@ export const DIY: DiyGuide[] = [
     legal: "Déclaration de travaux possible selon taille et PLU. Pas sous les fondations sans quelqu’un du métier. Ce n’est pas un assainissement.",
     links: ["conservation", "garde", "legal"],
   },
+  {
+    id: "nichoirs",
+    name: "Nichoirs à mésanges",
+    category: "abri",
+    difficulty: 1,
+    time: "2 heures",
+    cost: "0–15 €",
+    materials: ["Planche brute non traitée 15–20 mm", "Vis inox", "Toit débordant", "Perceuse, scie cloche"],
+    steps: [
+      "Volume intérieur ~12 × 12 × 25 cm, toit ouvrant pour le nettoyage",
+      "Trou d’envol 28 mm (mésange bleue) ou 32 mm (charbonnière), à ~17 cm du fond, sans perchoir",
+      "Poser avant février, à 2–3 m, trou orienté est/sud-est, hors d’atteinte des chats",
+      "Nettoyer en automne (septembre–octobre), une fois les nichées terminées",
+    ],
+    legal: "Libre. Mésanges et nichées sont protégées : ne pas ouvrir le nichoir pendant la nidification.",
+    links: ["sol", "verger"],
+  },
 ];

@@ -23,6 +23,8 @@ export type Profile = {
   irrigation: boolean;
   /** Pertes de stockage et de transformation (%). */
   storageLossPct: number;
+  /** Altitude du jardin (m), pour décaler le calendrier. */
+  altitudeM: number;
   surfaceM2: number;
   gardenM2: number;
   climate: ClimateId;
@@ -83,6 +85,7 @@ export const defaultProfile: Profile = {
   skill: "debutant",
   irrigation: true,
   storageLossPct: 15,
+  altitudeM: 100,
   surfaceM2: 200,
   gardenM2: 80,
   climate: "semi-oceanique",
