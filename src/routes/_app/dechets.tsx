@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Disclaimer } from "@/components/disclaimer";
 import { NumberField } from "@/components/number-field";
 import { PageHeader } from "@/components/page-header";
@@ -9,17 +9,19 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { CROP_FEEDING, WASTE_INPUTS, WASTE_METHODS } from "@/data/waste";
 import { frEuro, frNumber } from "@/lib/format";
-import { useHavre } from "@/lib/store";
+import { useHavre, usePref } from "@/lib/store";
 
 export const Route = createFileRoute("/_app/dechets")({ component: DechetsPage });
 
 function DechetsPage() {
   const garden = useHavre((s) => s.profile.gardenM2);
   const patchProfile = useHavre((s) => s.patchProfile);
-  const [inputs, setInputs] = useState<Record<string, number>>(() =>
-    Object.fromEntries(WASTE_INPUTS.map((i) => [i.id, i.kgWeekDefault])),
+  const [savedInputs, saveInputs] = usePref("wasteInputs");
+  const inputs: Record<string, number> = Object.fromEntries(
+    WASTE_INPUTS.map((i) => [i.id, savedInputs[i.id] ?? i.kgWeekDefault]),
   );
-  const [methodId, setMethodId] = useState("compost");
+  const setInputs = (f: (s: Record<string, number>) => Record<string, number>) => saveInputs(f(inputs));
+  const [methodId, setMethodId] = usePref("wasteMethodId");
   const method = WASTE_METHODS.find((m) => m.id === methodId) ?? WASTE_METHODS[0];
 
   const weekly = useMemo(
@@ -28,7 +30,7 @@ function DechetsPage() {
   );
   const browns = (inputs.carton ?? 0) + (inputs.broyat ?? 0);
   const brownPct = weekly > 0 ? (browns / weekly) * 100 : 0;
-  const [coverKgM2, setCoverKgM2] = useState(3);
+  const [coverKgM2, setCoverKgM2] = usePref("compostDoseKgM2");
   const yearIn = weekly * 52;
   const yearOut = yearIn * method.conversion;
   const weeks = method.timeWeeks;

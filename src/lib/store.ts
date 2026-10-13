@@ -11,6 +11,41 @@ export type Orientation = "sud" | "sud-est-ouest" | "est-ouest" | "nord";
 export type WoodKind = "feuillus-durs" | "feuillus-tendres" | "resineux";
 export type RoofMaterial = "tuiles" | "metal" | "ardoise" | "plat-gravier" | "vegetalise";
 
+/** Réglages des calculateurs (poulailler, atelier, semis, déchets), enregistrés avec le profil. */
+export type ToolPrefs = {
+  hens: number;
+  breed: "hybride" | "mixte" | "ornement";
+  layAge: "1" | "2" | "3" | "4";
+  moultWeeks: number;
+  rangePct: number;
+  feedEur: number;
+  eggsPerAdultWeek: number;
+  trimPct: number;
+  jarFillPct: number;
+  pathsPct: number;
+  sowLossPct: number;
+  wasteInputs: Record<string, number>;
+  wasteMethodId: string;
+  compostDoseKgM2: number;
+};
+
+export const defaultPrefs: ToolPrefs = {
+  hens: 4,
+  breed: "mixte",
+  layAge: "1",
+  moultWeeks: 8,
+  rangePct: 20,
+  feedEur: 0.6,
+  eggsPerAdultWeek: 4,
+  trimPct: 0,
+  jarFillPct: 100,
+  pathsPct: 25,
+  sowLossPct: 20,
+  wasteInputs: {},
+  wasteMethodId: "compost",
+  compostDoseKgM2: 3,
+};
+
 export type Profile = {
   completed: boolean;
   people: number;
@@ -52,6 +87,7 @@ export type Profile = {
   wasteKgWeek: number;
   goals: string[];
   activeChainIds: string[];
+  prefs: ToolPrefs;
 };
 
 export type LogKind =
@@ -113,6 +149,7 @@ export const defaultProfile: Profile = {
   wasteKgWeek: 6,
   goals: [],
   activeChainIds: [],
+  prefs: defaultPrefs,
 };
 
 type State = {
@@ -127,6 +164,7 @@ type State = {
   setHydrated: () => void;
   patchProfile: (p: Partial<Profile>) => void;
   patchHousing: (p: Partial<Profile["housing"]>) => void;
+  patchPrefs: (p: Partial<ToolPrefs>) => void;
   toggleAnimal: (id: string) => void;
   toggleChain: (id: string) => void;
   toggleGoal: (id: string) => void;
@@ -141,6 +179,14 @@ type State = {
   clearPlan: () => void;
   resetAll: () => void;
 };
+
+/** Réglage d’un calculateur, persistant ; valeur par défaut avant réhydratation. */
+export function usePref<K extends keyof ToolPrefs>(key: K): [ToolPrefs[K], (v: ToolPrefs[K]) => void] {
+  const hydrated = useHavre((s) => s.hydrated);
+  const value = useHavre((s) => s.profile.prefs?.[key] ?? defaultPrefs[key]);
+  const patch = useHavre((s) => s.patchPrefs);
+  return [hydrated ? value : defaultPrefs[key], (v) => patch({ [key]: v } as Partial<ToolPrefs>)];
+}
 
 export const useHavre = create<State>()(
   persist(
@@ -157,6 +203,8 @@ export const useHavre = create<State>()(
       patchProfile: (p) => set((s) => ({ profile: { ...s.profile, ...p } })),
       patchHousing: (p) =>
         set((s) => ({ profile: { ...s.profile, housing: { ...s.profile.housing, ...p } } })),
+      patchPrefs: (p) =>
+        set((s) => ({ profile: { ...s.profile, prefs: { ...defaultPrefs, ...s.profile.prefs, ...p } } })),
       toggleAnimal: (id) =>
         set((s) => ({
           profile: {
@@ -251,6 +299,7 @@ export const useHavre = create<State>()(
             ...defaultProfile,
             ...profile,
             housing: { ...defaultProfile.housing, ...(profile.housing ?? {}) },
+            prefs: { ...defaultPrefs, ...(profile.prefs ?? {}) },
           },
         };
       },
