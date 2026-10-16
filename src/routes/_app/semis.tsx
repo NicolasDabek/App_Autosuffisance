@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Disclaimer } from "@/components/disclaimer";
+import { Advanced } from "@/components/havre";
 import { NumberField } from "@/components/number-field";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -10,20 +11,11 @@ import { Label } from "@/components/ui/label";
 import { CROPS } from "@/data/crops";
 import { seedRateFor } from "@/data/seed-rates";
 import { MONTH_LABELS, currentMonthIndex, frNumber } from "@/lib/format";
-import { gardenYield } from "@/lib/calculators";
+import { allocatePlan, gardenYield } from "@/lib/calculators";
 import { useHavre, usePref } from "@/lib/store";
 
 export const Route = createFileRoute("/_app/semis")({ component: SemisPage });
 
-function allocate(ids: string[], garden: number, areas: Record<string, number>) {
-  const custom = ids.filter((id) => (areas[id] ?? 0) > 0);
-  const customSum = custom.reduce((acc, id) => acc + (areas[id] ?? 0), 0);
-  const rest = ids.filter((id) => (areas[id] ?? 0) <= 0);
-  const share = rest.length ? Math.max(0, garden - customSum) / rest.length : 0;
-  const out: Record<string, number> = {};
-  for (const id of ids) out[id] = (areas[id] ?? 0) > 0 ? areas[id] : share;
-  return { out, customSum, share };
-}
 
 /** Semence majorée des pertes ; plants et graines comptés en unités entières. */
 function seedText(qty: number, unit: string, lossPct: number) {
@@ -53,7 +45,7 @@ function SemisPage() {
   const ids = hydrated ? planIds : [];
   const areas = hydrated ? planM2 : {};
   const selected = CROPS.filter((c) => ids.includes(c.id));
-  const { out, customSum } = allocate(ids, garden, areas);
+  const { out, customSum } = allocatePlan(ids, garden, areas);
   const assigned = selected.reduce((acc, c) => acc + (out[c.id] ?? 0), 0);
   const kilos = selected.reduce((acc, c) => acc + (out[c.id] ?? 0) * c.yieldKgM2 * site, 0);
 
@@ -100,7 +92,8 @@ function SemisPage() {
         </Card>
       </div>
 
-      <div className="mb-6 grid max-w-xl gap-4 sm:grid-cols-2">
+      <Advanced title="Réglages du plan" count={2} className="mb-6 max-w-xl bg-card">
+      <div className="mt-1 grid max-w-xl gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <Label htmlFor="paths">Allées et passe-pieds (%)</Label>
           <NumberField id="paths" integer min={0} max={60} value={pathsPct} onValueChange={setPathsPct} />
@@ -110,6 +103,7 @@ function SemisPage() {
           <NumberField id="loss" integer min={0} max={70} value={lossPct} onValueChange={setLossPct} />
         </div>
       </div>
+      </Advanced>
 
       {customSum > garden + 0.05 ? (
         <p className="mb-4 rounded-lg border border-border bg-muted/60 px-3 py-2 text-sm">

@@ -5,9 +5,14 @@ import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CROPS, ROTATION_GUIDE, SEED_SAVING } from "@/data/crops";
-import { gardenYield } from "@/lib/calculators";
+import { Advanced, Chip, Hero, ListRow, Note, Segmented } from "@/components/havre";
+import { Button } from "@/components/ui/button";
+import { allocatePlan, gardenYield, household, wasteStats } from "@/lib/calculators";
 import { frNumber, MONTH_LABELS } from "@/lib/format";
-import { useHavre } from "@/lib/store";
+import { usePref, useHavre } from "@/lib/store";
+
+const ROT_COLORS = ["#a4482b", "#2f5d3a", "#c9922e", "#2d6170", "#5a3a26", "#5a5045"];
+const DIET: Record<string, string> = { omnivore: "omnivore", flexitarien: "flexitarien", vegetarien: "végétarien", vegan: "végétalien" };
 
 export const Route = createFileRoute("/_app/potager")({ component: PotagerPage });
 
@@ -25,7 +30,27 @@ function PotagerPage() {
   const garden = profile.gardenM2;
   const y = gardenYield(profile);
   const month = new Date().getMonth();
-  const now = CROPS.filter((c) => c.monthsSow.includes(month) || c.monthsHarvest.includes(month));
+  const sowNow = CROPS.filter((c) => c.monthsSow.includes(month));
+  const harvestNow = CROPS.filter((c) => c.monthsHarvest.includes(month));
+  const [tab, setTab] = useState<"semer" | "recolter" | "tout">("semer");
+  const [showAll, setShowAll] = useState(false);
+  const shown = tab === "semer" ? sowNow : tab === "recolter" ? harvestNow : CROPS;
+  const hydrated = useHavre((s) => s.hydrated);
+  const planIds = useHavre((s) => s.planIds);
+  const planM2 = useHavre((s) => s.planM2);
+  const logs = useHavre((s) => s.logs);
+  const [pathsPct] = usePref("pathsPct");
+  const cultivated = garden * (1 - Math.min(60, Math.max(0, pathsPct)) / 100);
+  const waste = wasteStats(profile, logs, "compost");
+  const ids = hydrated ? (planIds ?? []) : [];
+  const { out } = allocatePlan(ids, cultivated, hydrated ? (planM2 ?? {}) : {});
+  const famM2 = new Map<string, number>();
+  for (const c of CROPS) if (ids.includes(c.id)) famM2.set(c.family, (famM2.get(c.family) ?? 0) + (out[c.id] ?? 0));
+  const famTotal = [...famM2.values()].reduce((a, b) => a + b, 0);
+  const rotation = famTotal > 0
+    ? [...famM2.entries()].map(([family, m2]) => ({ family, pct: (m2 / famTotal) * 100 })).filter((r) => r.pct > 0).sort((a, b) => b.pct - a.pct)
+    : [];
+  const overloaded = rotation.filter((r) => r.pct > 40);
   const gourmandes = CROPS.filter((c) => c.nNeed === "fort");
   const families = useMemo(() => [...new Set(CROPS.map((c) => c.family))].sort(), []);
   const [season, setSeason] = useState<(typeof SEASONS)[number]["id"]>("all");
@@ -47,57 +72,122 @@ function PotagerPage() {
         description="Cultures, rotations, faim d’azote et semences. Reliez cette page aux déchets : le compost mûr nourrit les gourmandes, pas les carottes."
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardContent className="p-5">
-            <p className="text-xs text-muted-foreground">Surface potager / verger</p>
-            <p className="mt-1 font-display text-2xl font-semibold tabular-nums">{garden} m²</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-5">
-            <p className="text-xs text-muted-foreground">Ordre de grandeur récolte</p>
-            <p className="mt-1 font-display text-2xl font-semibold tabular-nums">~{frNumber(y.net, 0)} kg/an</p>
-            <p className="text-xs text-muted-foreground">
-              {frNumber(y.kgM2, 1)} kg/m² (climat ×{frNumber(y.factors.climate, 2)}, sol ×{frNumber(y.factors.soil, 2)},
-              savoir-faire ×{frNumber(y.factors.skill, 2)}, eau ×{frNumber(y.factors.water, 2)}) − {profile.storageLossPct} % de pertes
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Couvre ≈ {frNumber(y.coverPct, 0)} % des {frNumber(y.needKg, 0)} kg de légumes, fruits et pommes de terre du
-              foyer ({profile.diet}). Autonomie légumière : ~{frNumber(y.m2ForFull, 0)} m².{" "}
-              <Link to="/" className="text-primary underline-offset-2 hover:underline">
-                Ajuster
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-5">
-            <p className="text-xs text-muted-foreground">À relier</p>
-            <Link to="/semis" className="mt-1 block text-sm text-primary underline-offset-2 hover:underline">
-              Plan de semis
-            </Link>
-            <Link to="/dechets" className="mt-1 block text-sm text-primary underline-offset-2 hover:underline">
-              Plan d’apports déchets → sol
-            </Link>
-            <Link to="/conservation" className="mt-1 block text-sm text-primary underline-offset-2 hover:underline">
-              Transformer la récolte
-            </Link>
-            <Link to="/sol" className="mt-1 block text-sm text-primary underline-offset-2 hover:underline">
-              Sol, engrais verts, ravageurs
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <Hero tone="bark" label={`Récolte estimée sur ${garden} m²`} value={`~${frNumber(y.net, 0)}`} unit="kg/an" pct={y.coverPct}>
+        <p className="text-sm">
+          {frNumber(y.coverPct, 0)} % des {frNumber(y.needKg, 0)} kg nécessaires · {frNumber(y.m2ForFull, 0)} m² pour l’autonomie
+        </p>
+      </Hero>
+      <Advanced title="Comment c’est calculé ?" icon="🧮" className="bg-card">
+        <p className="text-sm text-muted-foreground">
+          2,2 kg/m² × climat {frNumber(y.factors.climate, 2)} × sol {frNumber(y.factors.soil, 2)} × savoir-faire{" "}
+          {frNumber(y.factors.skill, 2)} × eau {frNumber(y.factors.water, 2)} = {frNumber(y.kgM2, 2)} kg/m², puis −{" "}
+          {profile.storageLossPct} % de pertes. Besoin : régime {DIET[profile.diet]}, {frNumber(household(profile).adultEq, 1)}{" "}
+          équivalent adulte.{" "}
+          <Link to="/" hash="foyer" className="text-primary underline">
+            Ajuster le profil
+          </Link>
+        </p>
+      </Advanced>
 
-      <h2 className="mt-10 font-display text-xl font-semibold">En ce moment</h2>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {now.map((c) => (
-          <Badge key={c.id} variant="secondary">
-            {c.name} {c.monthsSow.includes(month) ? "· semer" : "· récolter"}
-          </Badge>
-        ))}
-      </div>
+      <Card className="mt-4">
+        <CardContent className="p-4">
+          <h2 className="text-[22px] font-bold">En {MONTH_LABELS[month]}</h2>
+          <div className="mt-3">
+            <Segmented<"semer" | "recolter" | "tout">
+              label="Cultures du mois"
+              value={tab}
+              onChange={setTab}
+              options={[
+                ["semer", `Semer · ${sowNow.length}`],
+                ["recolter", `Récolter · ${harvestNow.length}`],
+                ["tout", "Tout"],
+              ]}
+            />
+          </div>
+          <div className="mt-2">
+            {shown.slice(0, showAll ? undefined : 6).map((c) => {
+              const sow = c.monthsSow.includes(month);
+              const harvest = c.monthsHarvest.includes(month);
+              const asSow = tab === "semer" || (tab === "tout" && sow);
+              return (
+                <ListRow
+                  key={c.id}
+                  icon={asSow ? "🌱" : harvest ? "🧺" : "🌿"}
+                  tone={asSow ? "moss" : harvest ? "terra" : "wheat"}
+                  title={c.name}
+                  sub={`${c.family} · ${frNumber(c.yieldKgM2, 1)} kg/m²`}
+                  right={
+                    tab === "tout" && !sow && !harvest ? (
+                      <Chip tone="wheat">hors saison</Chip>
+                    ) : asSow ? (
+                      <Chip>semer</Chip>
+                    ) : (
+                      <Chip tone="terra">récolter</Chip>
+                    )
+                  }
+                />
+              );
+            })}
+            {shown.length === 0 ? <p className="py-3 text-sm text-muted-foreground">Rien à {tab === "semer" ? "semer" : "récolter"} ce mois-ci.</p> : null}
+          </div>
+          {shown.length > 6 ? (
+            <Button variant="outline" className="mt-3 w-full" onClick={() => setShowAll(!showAll)}>
+              {showAll ? "Réduire la liste" : `Voir les ${shown.length} cultures`}
+            </Button>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardContent className="p-4">
+          <h2 className="text-[22px] font-bold">Rotation</h2>
+          <p className="text-[15px] text-muted-foreground">Au-delà de 40 % de surface pour une famille, le sol fatigue.</p>
+          {rotation.length ? (
+            <>
+              <div className="mt-3 flex h-6 overflow-hidden rounded-lg text-xs font-bold" role="img" aria-label="Répartition des familles au plan de semis">
+                {rotation.map((r, i) => (
+                  <div
+                    key={r.family}
+                    className="truncate px-1.5 py-1"
+                    style={{ width: `${r.pct}%`, background: ROT_COLORS[i % ROT_COLORS.length], color: i % ROT_COLORS.length === 2 ? "#1f1a14" : "#fff" }}
+                    title={`${r.family} ${frNumber(r.pct, 0)} %`}
+                  >
+                    {r.family}
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {rotation.map((r) => `${r.family} ${frNumber(r.pct, 0)} %`).join(" · ")}
+              </p>
+              {overloaded.length ? (
+                <Note icon="⚠">
+                  {overloaded.map((r) => r.family).join(", ")} dépasse{overloaded.length > 1 ? "nt" : ""} 40 % du plan.
+                </Note>
+              ) : (
+                <Note tone="ok" icon="✓">
+                  Aucune famille ne dépasse 40 %.
+                </Note>
+              )}
+            </>
+          ) : (
+            <Note tone="info" icon="📋">
+              Aucun plan de semis : ajoutez des cultures pour voir la rotation.
+            </Note>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardContent className="p-4">
+          <h2 className="text-[22px] font-bold">À relier</h2>
+          <div className="mt-1.5">
+            <ListRow icon="📋" title="Plan de semis" sub={`Répartir les ${frNumber(cultivated, 0)} m² cultivés`} to="/semis" />
+            <ListRow icon="♻" tone="terra" title="Déchets → sol" sub={`${frNumber(waste.kgOut, 0)} kg d’amendement / an`} to="/dechets" />
+            <ListRow icon="🫙" tone="wheat" title="Transformer la récolte" sub="Conserves, séchage, cave" to="/conservation" />
+            <ListRow icon="🐞" tone="water" title="Sol, engrais verts, ravageurs" sub="Base de connaissances" to="/sol" />
+          </div>
+        </CardContent>
+      </Card>
 
       <h2 className="mt-10 font-display text-xl font-semibold">Rotation type sur 4 planches</h2>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

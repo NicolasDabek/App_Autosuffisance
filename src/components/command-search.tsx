@@ -39,13 +39,15 @@ function buildIndex(): Hit[] {
   return hits;
 }
 
-export function CommandSearch() {
+export function CommandSearch({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const router = useRouter();
   const index = useMemo(buildIndex, []);
 
   useEffect(() => {
+    // Une seule instance (la non compacte) écoute ⌘K, pour ne pas ouvrir deux dialogues.
+    if (compact) return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -54,7 +56,7 @@ export function CommandSearch() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [compact]);
 
   const results = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -66,6 +68,16 @@ export function CommandSearch() {
 
   return (
     <>
+      {compact ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Rechercher"
+          className="grid size-10 place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-muted"
+        >
+          <Search className="size-[18px]" />
+        </button>
+      ) : (
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -77,6 +89,7 @@ export function CommandSearch() {
           ⌘K
         </kbd>
       </button>
+      )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="gap-3 p-4">
           <DialogHeader>

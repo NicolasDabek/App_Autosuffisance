@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Disclaimer } from "@/components/disclaimer";
+import { Hero } from "@/components/havre";
 import { NumberField } from "@/components/number-field";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { WATER, rainCollectable } from "@/data/water";
+import { RAIN_MM, WATER, rainCollectable } from "@/data/water";
 import { climateById } from "@/data/climate";
 import { roofCoefficient } from "@/lib/calculators";
 import { frNumber } from "@/lib/format";
@@ -14,21 +15,12 @@ import { useHavre } from "@/lib/store";
 
 export const Route = createFileRoute("/_app/eau")({ component: EauPage });
 
-const MM: Record<string, number> = {
-  oceanique: 850,
-  "semi-oceanique": 700,
-  continental: 750,
-  mediterraneen: 550,
-  montagne: 1100,
-  "atlantique-sud": 900,
-};
-
 function EauPage() {
   const profile = useHavre((s) => s.profile);
   const patchHousing = useHavre((s) => s.patchHousing);
   const [overflowPct, setOverflowPct] = useState(20);
   const roof = profile.housing.roofM2;
-  const mm = MM[profile.climate] ?? 700;
+  const mm = RAIN_MM[profile.climate] ?? 700;
   const coef = roofCoefficient(profile.housing.roofMaterial);
   const efficiency = coef * (1 - overflowPct / 100);
   const litres = rainCollectable(roof, mm, efficiency);
@@ -42,7 +34,13 @@ function EauPage() {
         description="La toiture, le paillage et la noue font plus, souvent, qu’un forage. L’eau de pluie n’est pas potable : le droit le dit clairement."
       />
 
-      <Card className="mb-8">
+      <Hero label="Pluie récupérable sur votre toiture" value={`≈ ${frNumber(litres / 1000, 1)}`} unit="m³/an">
+        <p className="text-sm">
+          {roof} m² × {mm} mm ({climate.name}) × {frNumber(efficiency * 100, 0)} % de rendement. Eau non potable.
+        </p>
+      </Hero>
+
+      <Card className="mb-8 mt-4">
         <CardHeader>
           <CardTitle>Collecte selon votre toiture</CardTitle>
         </CardHeader>
