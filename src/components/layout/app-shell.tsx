@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { CircleUserRound, Flame, House, Menu, Sprout, Bird } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { CommandSearch } from "@/components/command-search";
+import { InstallPrompt } from "@/components/install-prompt";
 import { Logo } from "@/components/logo";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -174,6 +175,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Sheet>
           <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-5 sm:px-6 lg:px-8 lg:pb-10 lg:pt-8">{children}</main>
           <BottomTabs onMore={() => setOpen(true)} />
+          <InstallPrompt />
         </div>
       </div>
     </TooltipProvider>

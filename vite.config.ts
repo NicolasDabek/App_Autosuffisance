@@ -145,7 +145,14 @@ function authPopupPlugin(): Plugin {
 // `0.0.0.0:8080` is the live-preview contract — don't change host/port.
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
+/**
+ * Build statique pour GitHub Pages (`npm run build:pages`) : SPA pré-rendue sous
+ * un sous-chemin, sans serveur. Le build Vercel par défaut reste inchangé.
+ */
+const PAGES_BASE = process.env.PAGES_BASE;
+
 export default defineConfig(({ command, isPreview }) => ({
+  ...(PAGES_BASE ? { base: PAGES_BASE } : {}),
   server: {
     host: "0.0.0.0",
     port: 8080,
@@ -164,10 +171,10 @@ export default defineConfig(({ command, isPreview }) => ({
     // Dev-only /__app-env, read by scripts/check-auth-invariant.mjs.
     appEnvPlugin(),
     // PWA head + ?install=1 tutorial page; runs before Start/Nitro.
-    grokPwaPlugin(),
+    ...(PAGES_BASE ? [] : [grokPwaPlugin()]),
     tailwindcss(),
-    tanstackStart(),
-    ...(command === "build" || isPreview
+    tanstackStart(PAGES_BASE ? { spa: { enabled: true } } : undefined),
+    ...(!PAGES_BASE && (command === "build" || isPreview)
       ? [
           nitro({
             preset: "vercel",
