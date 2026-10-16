@@ -156,3 +156,13 @@ export const WATER: WaterTopic[] = [
 export function rainCollectable(roofM2: number, mmYear: number, efficiency = 0.5) {
   return roofM2 * mmYear * efficiency; // litres
 }
+
+/** Pluviométrie annuelle indicative par climat (mm). */
+export const RAIN_MM: Record<string, number> = {
+  oceanique: 850,
+  "semi-oceanique": 700,
+  continental: 750,
+  mediterraneen: 550,
+  montagne: 1100,
+  "atlantique-sud": 900,
+};

@@ -44,7 +44,7 @@ function DechetsPage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <Card className="lg:col-span-2">
+        <Card className="order-2 lg:order-1 lg:col-span-2">
           <CardHeader>
             <CardTitle>Intrants hebdomadaires</CardTitle>
           </CardHeader>
@@ -79,7 +79,7 @@ function DechetsPage() {
           </CardContent>
         </Card>
 
-        <div className="flex flex-col gap-3 lg:col-span-3">
+        <div className="order-1 flex flex-col gap-3 lg:order-2 lg:col-span-3">
           <div className="flex flex-wrap gap-2">
             {WASTE_METHODS.map((m) => (
               <Button

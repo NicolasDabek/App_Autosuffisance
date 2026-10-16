@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Disclaimer } from "@/components/disclaimer";
+import { Advanced, Hero, Kpi, KpiGrid } from "@/components/havre";
 import { NumberField } from "@/components/number-field";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -28,11 +29,24 @@ function EnergiePage() {
         description="Isoler, puis chauffer, puis produire. Les montants d’aides changent : France Rénov’ reste la porte d’entrée, pas un devis de salon."
       />
 
-      <Card className="mb-8">
+      <Hero label="Bois si 100 % de la chaleur" value={frNumber(stats.steres, 1)} unit="stères/an">
+        <p className="text-sm">
+          {frNumber(stats.usefulHeat, 0)} kWh utiles ÷ ({frNumber(stats.kwhPerStere, 0)} kWh/stère × {h.stoveEffPct} %). {stats.climate.woodNote}
+        </p>
+      </Hero>
+      <KpiGrid>
+        <Kpi label="☀ PV toiture" value={frNumber(stats.pv.kwc, 1)} unit="kWc" note={`~${frNumber(stats.pv.kwh, 0)} kWh/an brut`} />
+        <Kpi label="⚡ Élec couverte" value={frNumber(stats.elecCov, 0)} unit="%" note={`${h.selfConsumptionPct} % autoconsommés`} />
+        <Kpi label="💶 Facture estimée" value={frNumber(bill, 0)} unit="€/an" note="0,22 €/kWh élec · 0,12 €/kWh chaleur" />
+        <Kpi label="🔥 Chaleur utile" value={frNumber(stats.usefulHeat / 1000, 1)} unit="MWh/an" note={`climat ${stats.climate.name.toLowerCase()}`} />
+      </KpiGrid>
+
+      <Card className="mb-8 mt-4">
         <CardHeader>
-          <CardTitle>Votre logement</CardTitle>
+          <CardTitle className="text-[22px]">Votre logement</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="grid gap-1.5">
             <Label>kWh électricité / an</Label>
             <NumberField
@@ -66,6 +80,13 @@ function EnergiePage() {
               ]}
             />
           </div>
+          <div className="grid gap-1.5">
+            <Label>Toiture pour panneaux (m²)</Label>
+            <NumberField integer min={0} value={h.roofM2} onValueChange={(roofM2) => patchHousing({ roofM2 })} />
+          </div>
+          </div>
+          <Advanced count={5}>
+            <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="grid gap-1.5">
             <Label>Essence de bois</Label>
             <Pick
@@ -101,10 +122,6 @@ function EnergiePage() {
             />
           </div>
           <div className="grid gap-1.5">
-            <Label>Toiture pour panneaux (m²)</Label>
-            <NumberField integer min={0} value={h.roofM2} onValueChange={(roofM2) => patchHousing({ roofM2 })} />
-          </div>
-          <div className="grid gap-1.5">
             <Label>Orientation du pan</Label>
             <Pick
               value={h.pvOrientation}
@@ -128,28 +145,12 @@ function EnergiePage() {
               onValueChange={(selfConsumptionPct) => patchHousing({ selfConsumptionPct })}
             />
           </div>
-          <div />
-          <div>
-            <p className="text-xs text-muted-foreground">Stères si tout le chaud au bois</p>
-            <p className="font-display text-2xl tabular-nums">{frNumber(stats.steres, 1)}</p>
-            <p className="text-xs text-muted-foreground">
-              {frNumber(stats.usefulHeat, 0)} kWh utiles ÷ ({frNumber(stats.kwhPerStere, 0)} kWh/stère ×{" "}
-              {h.stoveEffPct} %). {stats.climate.woodNote}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">PV toiture (ordre, sans batterie)</p>
-            <p className="font-display text-2xl tabular-nums">{frNumber(stats.pv.kwc, 1)} kWc</p>
-            <p className="text-xs text-muted-foreground">
-              ~{frNumber(stats.pv.kwh, 0)} kWh brut · {frNumber(stats.elecCov, 0)} % des besoins élec ({h.selfConsumptionPct} % autoconsommés)
-            </p>
-          </div>
+            </div>
+          </Advanced>
         </CardContent>
       </Card>
 
-      <p className="mb-4 text-sm text-muted-foreground">
-        Facture d’ordre de grandeur (0,22 €/kWh élec, 0,12 €/kWh chaleur) : {frEuro(bill)} / an. Ce n’est pas un devis.
-      </p>
+      <h2 className="mb-3 text-[22px] font-bold">Scénarios</h2>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {ENERGY_SCENARIOS.map((s) => {

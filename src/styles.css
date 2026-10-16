@@ -2,37 +2,53 @@
 @import "tw-animate-css";
 
 @theme {
-  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  /* Polices système uniquement : aucun téléchargement. */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
 
-  --color-background: #f1ebe1;
-  --color-foreground: #1c1814;
-  --color-card: #faf7f1;
-  --color-card-foreground: #1c1814;
-  --color-popover: #faf7f1;
-  --color-popover-foreground: #1c1814;
-  --color-primary: #3a5340;
-  --color-primary-foreground: #f4f1ea;
-  --color-secondary: #e8e1d4;
-  --color-secondary-foreground: #1c1814;
-  --color-muted: #e6dfd3;
-  --color-muted-foreground: #6a6358;
-  --color-accent: #dde5d8;
-  --color-accent-foreground: #2a3d30;
-  --color-destructive: #8f3d32;
-  --color-destructive-foreground: #faf7f1;
-  --color-border: #d8d0c3;
-  --color-input: #d8d0c3;
-  --color-ring: #3a5340;
-  --color-sidebar: #eae3d6;
-  --color-sidebar-foreground: #1c1814;
-  --color-sidebar-accent: #dfe6d9;
-  --color-sidebar-border: #d4cbbc;
-  --color-chart-1: #3a5340;
-  --color-chart-2: #4a6b72;
-  --color-chart-3: #6b5344;
-  --color-chart-4: #8a9484;
-  --color-chart-5: #5c6b4a;
+  /* Palette Havre : lin, papier, encre, mousse, terre cuite, blé, eau. */
+  --color-background: #f4eee3;
+  --color-foreground: #1f1a14;
+  --color-card: #fffcf6;
+  --color-card-foreground: #1f1a14;
+  --color-popover: #fffcf6;
+  --color-popover-foreground: #1f1a14;
+  --color-primary: #2f5d3a;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #e3ecdf;
+  --color-secondary-foreground: #234a2c;
+  --color-muted: #ece4d6;
+  --color-muted-foreground: #5a5045;
+  --color-accent: #e3ecdf;
+  --color-accent-foreground: #234a2c;
+  --color-destructive: #a4482b;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e2d8c8;
+  --color-input: #cfc3b0;
+  --color-ring: #2f5d3a;
+  --color-sidebar: #fffcf6;
+  --color-sidebar-foreground: #1f1a14;
+  --color-sidebar-accent: #e3ecdf;
+  --color-sidebar-border: #e2d8c8;
+  --color-chart-1: #2f5d3a;
+  --color-chart-2: #2d6170;
+  --color-chart-3: #a4482b;
+  --color-chart-4: #c9922e;
+  --color-chart-5: #5a5045;
+
+  --color-moss: #2f5d3a;
+  --color-moss-dark: #234a2c;
+  --color-moss-light: #e3ecdf;
+  --color-terra: #a4482b;
+  --color-terra-dark: #7f3520;
+  --color-terra-light: #f6e3d9;
+  --color-wheat: #c9922e;
+  --color-wheat-dark: #6f4d0f;
+  --color-wheat-light: #f8ecd2;
+  --color-water: #2d6170;
+  --color-water-dark: #1f4a56;
+  --color-water-light: #dcebee;
+  --color-bark: #5a3a26;
 
   --radius-xs: 4px;
   --radius-sm: 8px;
@@ -42,9 +58,8 @@
   --radius: 12px;
 
   --shadow-border:
-    0px 0px 0px 1px rgba(28, 24, 20, 0.06),
-    0px 1px 2px -1px rgba(28, 24, 20, 0.06),
-    0px 2px 4px 0px rgba(28, 24, 20, 0.04);
+    0px 0px 0px 1px #e2d8c8,
+    0px 1px 2px 0px rgba(31, 26, 20, 0.05);
   --shadow-border-hover:
     0px 0px 0px 1px rgba(28, 24, 20, 0.1),
     0px 1px 2px -1px rgba(28, 24, 20, 0.08),
@@ -63,16 +78,16 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    background-image:
-      radial-gradient(ellipse 80% 50% at 0% -10%, color-mix(in oklab, var(--color-primary) 7%, transparent), transparent 55%),
-      radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in oklab, var(--color-chart-3) 5%, transparent), transparent 50%);
-    background-attachment: fixed;
+    font-size: 16px;
+    line-height: 1.5;
   }
 
   h1,
   h2,
   h3 {
     text-wrap: balance;
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
   }
 
   p {
@@ -97,4 +112,20 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* « Mode avancé » repliable, commun à tous les calculateurs. */
+details.havre-adv > summary {
+  list-style: none;
+}
+details.havre-adv > summary::-webkit-details-marker {
+  display: none;
+}
+details.havre-adv > summary::after {
+  content: "+";
+  margin-left: auto;
+  font-size: 1.25rem;
+}
+details.havre-adv[open] > summary::after {
+  content: "−";
 }

@@ -13,8 +13,10 @@ import type {
   RoofMaterial,
   Skill,
   SoilId,
+  ToolPrefs,
   WoodKind,
 } from "./store";
+import { defaultPrefs } from "./store";
 
 const NOISE_MAP: Record<NoiseTol, 1 | 2 | 3> = { faible: 1, moyen: 2, eleve: 3 };
 
@@ -313,4 +315,54 @@ export function nextActions(profile: Profile, stocks: Record<string, number> = {
     });
   }
   return actions.slice(0, 5);
+}
+
+/** Ponte annuelle de 1re année selon le type de poule (ordres de grandeur). */
+export const BREEDS = {
+  hybride: { label: "Hybride pondeuse (rousse, ISA…)", eggs: 280 },
+  mixte: { label: "Rustique mixte (Sussex, Marans…)", eggs: 180 },
+  ornement: { label: "Ornement / naine", eggs: 110 },
+} as const;
+
+/** La ponte baisse d’environ 15 à 20 % par an après la première saison. */
+export const AGE_FACTOR = { "1": 1, "2": 0.82, "3": 0.68, "4": 0.55 } as const;
+
+/** Poulailler : ponte, aliment, couverture des besoins — à partir des réglages enregistrés. */
+export function flockStats(profile: Profile, prefs: ToolPrefs = profile.prefs ?? defaultPrefs) {
+  const p = { ...defaultPrefs, ...prefs };
+  const hh = household(profile);
+  // La pause mue/hiver est en partie incluse dans les moyennes : on ne retire que l’excédent au-delà de 6 semaines.
+  const extraPause = Math.max(0, Math.min(26, p.moultWeeks) - 6) / 52;
+  const perHen = BREEDS[p.breed].eggs * AGE_FACTOR[p.layAge] * (1 - extraPause);
+  const eggsYear = p.hens * perHen;
+  const feedKg = p.hens * 44 * (1 - Math.min(60, Math.max(0, p.rangePct)) / 100);
+  const need = p.eggsPerAdultWeek * hh.adultEq * 52;
+  const cover = need ? (eggsYear / need) * 100 : 0;
+  const costPerDozen = eggsYear > 0 ? (feedKg * p.feedEur * 12) / eggsYear : 0;
+  const hensNeeded = perHen > 0 && need > 0 ? Math.ceil(need / perHen) : 0;
+  return {
+    ...p,
+    hh,
+    perHen,
+    eggsYear,
+    feedKg,
+    feedCost: feedKg * p.feedEur,
+    need,
+    cover,
+    costPerDozen,
+    surplus: Math.max(0, eggsYear - need),
+    hensNeeded,
+    coverWithNeeded: hensNeeded && need ? ((hensNeeded * perHen) / need) * 100 : 0,
+  };
+}
+
+/** Répartit la surface cultivée entre les cultures du plan (m² saisis, sinon parts égales). */
+export function allocatePlan(ids: string[], garden: number, areas: Record<string, number>) {
+  const custom = ids.filter((id) => (areas[id] ?? 0) > 0);
+  const customSum = custom.reduce((acc, id) => acc + (areas[id] ?? 0), 0);
+  const rest = ids.filter((id) => (areas[id] ?? 0) <= 0);
+  const share = rest.length ? Math.max(0, garden - customSum) / rest.length : 0;
+  const out: Record<string, number> = {};
+  for (const id of ids) out[id] = (areas[id] ?? 0) > 0 ? areas[id] : share;
+  return { out, customSum, share };
 }

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Disclaimer } from "@/components/disclaimer";
+import { Chip, Kpi, KpiGrid } from "@/components/havre";
 import { FlockCalculator } from "@/components/flock-calculator";
 import { LegalBadge } from "@/components/legal-badge";
 import { PageHeader } from "@/components/page-header";
@@ -22,8 +23,8 @@ function AnimalPage() {
   return (
     <div>
       <PageHeader
-        kicker="Élevage"
-        title={a.name}
+        kicker={`Élevage › ${a.name}`}
+        title={a.id === "poules" ? "Calculer son poulailler" : a.name}
         description={a.summary}
         action={
           <Button variant={present ? "outline" : "default"} onClick={() => toggle(id)}>
@@ -31,26 +32,24 @@ function AnimalPage() {
           </Button>
         }
       />
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="-mt-2 mb-4 flex flex-wrap items-center gap-2">
+        <Chip tone={a.beginner ? "moss" : "terra"}>{a.beginner ? "✓ Accessible" : "Expérimenté"}</Chip>
         <LegalBadge level={a.legal.level} />
-        {a.beginner ? (
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs">Accessible</span>
-        ) : (
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs">Expérimenté</span>
-        )}
-        <span className="text-xs text-muted-foreground">{a.latin}</span>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Fact k="Surface min. / conseillée" v={`${a.minSurfaceM2} / ${a.recommendedSurfaceM2} m²`} />
-        <Fact k="Budget de départ" v={`à partir de ${a.minBudgetEur} €`} />
-        <Fact k="Temps" v={`${a.hoursPerWeek} h / semaine`} />
-        <Fact k="Bruit / odeur" v={`${a.noise} / 3 · ${a.smell} / 3`} />
-        <Fact k="Cadres" v={a.settings.join(", ")} />
-        <Fact k="Climats" v={a.climates === "all" ? "Tous" : a.climates.join(", ")} />
+        <Chip tone="water">
+          {a.minSurfaceM2}–{a.recommendedSurfaceM2} m²
+        </Chip>
+        <Chip tone="water">{a.hoursPerWeek} h/sem.</Chip>
+        {a.latin ? <span className="text-xs italic text-muted-foreground">{a.latin}</span> : null}
       </div>
 
       {a.id === "poules" ? <FlockCalculator /> : null}
+
+      <KpiGrid className="mt-4">
+        <Kpi label="Budget de départ" value={`${a.minBudgetEur}`} unit="€ min." />
+        <Kpi label="Bruit / odeur" value={`${a.noise} · ${a.smell}`} unit="/ 3" />
+        <Kpi label="Cadres" value={`${a.settings.length}`} unit="cadres" note={a.settings.join(", ")} />
+        <Kpi label="Climats" value={a.climates === "all" ? "Tous" : `${a.climates.length}`} note={a.climates === "all" ? undefined : a.climates.join(", ")} />
+      </KpiGrid>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card>
@@ -155,11 +154,3 @@ function AnimalPage() {
   );
 }
 
-function Fact({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="rounded-xl bg-card p-4 shadow-[var(--shadow-border)]">
-      <p className="text-xs text-muted-foreground">{k}</p>
-      <p className="mt-1 font-medium capitalize">{v}</p>
-    </div>
-  );
-}
