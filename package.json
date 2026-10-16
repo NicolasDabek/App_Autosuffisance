@@ -19,7 +19,8 @@
     "test": "node --test scripts/*.test.mjs && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/app-data/readiness-schedule.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "build:pages": "PAGES_BASE=${PAGES_BASE:-/App_Autosuffisance/} node scripts/with-app-env.mjs vite build && node scripts/pages-postbuild.mjs"
+    "build:pages": "PAGES_BASE=${PAGES_BASE:-/App_Autosuffisance/} node scripts/with-app-env.mjs vite build && node scripts/pages-postbuild.mjs",
+    "deploy:pages": "sh scripts/deploy-pages.sh"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
