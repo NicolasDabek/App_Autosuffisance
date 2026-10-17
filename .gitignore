@@ -4,3 +4,9 @@ node_modules/
 .env
 .env.*
 dist/
+
+# Artefacts de build et état local de la plateforme
+.vercel/
+.grok/*
+# Nécessaire au build (VITE_AUTH_ENABLED=false) : sans lui, un clone propre compilerait avec l’auth activée.
+!.grok/app-env.json
