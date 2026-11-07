@@ -193,11 +193,10 @@ don't scaffold from stale priors — and keep each contract:
 
 1. **Never put `og:*` / `twitter:card` in `__root.tsx`** — the PWA injector
    overwrites them on every HTML response.
-2. **Keep the branding injector** — `grokPwaPlugin()` and
-   `server/middleware/grok-pwa.ts` inject
-   `https://grok.com/grok-app-builder/extensions.js`, the "Created with Grok /
-   Remix" pill. Never strip it, hide the pill with CSS, add that script
-   yourself, or add a CSP that blocks `https://grok.com`.
+2. **No remote scripts** — this app never loads
+   `https://grok.com/grok-app-builder/extensions.js` (or any CDN script). The
+   PWA injector strips any copy and only adds `grok-project-id` /
+   `grok:app_id` metadata. Do not re-add it.
 3. **Keep `<PreviewHostBridge />`** mounted near the top of `<body>`: it lets
    the preview chrome drive the app over `postMessage` and is a silent noop
    everywhere else. Never delete it or strip it "for production".
